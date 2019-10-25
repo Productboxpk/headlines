@@ -1,0 +1,45 @@
+{{!< layout}}
+<header class="aui-page-header">
+	<div class="aui-page-header-inner">
+		<div class="aui-page-header-main intro-header">
+			<h1>{{title}}</h1>
+		</div>
+	</div>
+</header>
+
+<div class="aui-page-panel main-panel">
+	<div class="aui-page-panel-inner">
+		<section class="aui-page-panel-item">
+			<div class="aui-group">
+				<div class="aui-item">
+					<div class="member-container">
+						{{#each data}}
+						<div class="card" id={{accountId}}>
+							<img src={{avatarUrls.24x24}} class="member-img" />
+							<h2>{{displayName}}</h2>
+							<a>{{emailAddress}}</a>
+						</div>
+						{{/each}}
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+<style>
+	.member-container {
+		display: flex;
+	}
+	.card {
+		text-align: center;
+		padding: 20px;
+		margin: 10px;
+		width: 200px;
+		border: 2px solid #ababab;
+		border-radius: 3px;
+	}
+	.card img {
+		width: 100px;
+	}
+
+</style>
