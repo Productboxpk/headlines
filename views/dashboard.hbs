@@ -12,12 +12,18 @@
 		<section class="aui-page-panel-item">
 			<div class="aui-group">
 				<div class="aui-item">
+					<div>Total Issues: {{data.length}}</div>
 					<div class="member-container">
 						{{#each data}}
-						<div class="card" id={{accountId}}>
-							<img src={{avatarUrls.24x24}} class="member-img" />
-							<h2>{{displayName}}</h2>
-							<a>{{emailAddress}}</a>
+						<div class="card">
+							<h4 class="issue-key">{{key}}</h4>
+							<h5 class="issue-summary">{{fields.summary}}</h5>
+							{{#if fields.assignee}}
+							<div class="assigne-data">
+								<img class="assignee-img" src={{fields.assignee.avatarUrls.16x16}} />
+								<span>{{fields.assignee.displayName}}</span>
+							</div>
+							{{/if}}
 						</div>
 						{{/each}}
 					</div>
@@ -29,17 +35,37 @@
 <style>
 	.member-container {
 		display: flex;
-	}
-	.card {
-		text-align: center;
-		padding: 20px;
-		margin: 10px;
-		width: 200px;
-		border: 2px solid #ababab;
-		border-radius: 3px;
-	}
-	.card img {
-		width: 100px;
+		flex-wrap: wrap;
 	}
 
+	.card {
+		text-align: center;
+		margin: 10px;
+		width: 200px;
+		box-shadow: 10px 10px 7px 0px #888888;
+		border-radius: 3px;
+	}
+
+	.assignee-img {
+		vertical-align: middle;
+		width: 32px;
+	}
+
+	.issue-key {
+		background: #0647a6;
+		color: #DEEBFF;
+		font-size: 16px;
+		font-weight: normal;
+		text-align: left;
+		padding: 5px 10px;
+	}
+
+	.issue-summary {
+		margin: 10px 0;
+		    min-height: 2rem;
+	}
+
+	.assigne-data{
+		padding: 10px;
+	}
 </style>

@@ -49,8 +49,6 @@ hbs.registerHelper("log", function(data) {
   console.log(data);
 });
 
-console.log(app, addon, 'app and add')
-
 const jira = new JiraClient({
 	host: "productboxpk.atlassian.net",
 	protocol: "https",
