@@ -20,8 +20,18 @@
 							<h5 class="issue-summary">{{fields.summary}}</h5>
 							{{#if fields.assignee}}
 							<div class="assigne-data">
-								<img class="assignee-img" src={{fields.assignee.avatarUrls.16x16}} />
-								<span>{{fields.assignee.displayName}}</span>
+								<div>
+									<img class="assignee-img" src={{fields.assignee.avatarUrls.16x16}} />
+									<span>{{fields.assignee.displayName}}</span>
+								</div>
+								<div>
+									<img class="assignee-img" src={{histories.author.avatarUrls.16x16}} />
+									{{#each histories.items}}
+									{{#when field 'eq' 'assignee'}}
+									<span>{{fromString}}</span>
+									{{/when}}
+									{{/each}}
+								</div>
 							</div>
 							{{/if}}
 						</div>
@@ -62,10 +72,10 @@
 
 	.issue-summary {
 		margin: 10px 0;
-		    min-height: 2rem;
+		min-height: 2rem;
 	}
 
-	.assigne-data{
+	.assigne-data {
 		padding: 10px;
 	}
 </style>

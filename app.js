@@ -1,10 +1,4 @@
-// Entry point for the app
-
-// Express is the underlying that atlassian-connect-express uses:
-// https://expressjs.com
 import express from "express";
-
-// https://expressjs.com/en/guide/using-middleware.html
 import bodyParser from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
@@ -23,6 +17,26 @@ const addon = ace(app);
 
 const port = addon.config.port();
 app.set("port", port);
+
+hbs.registerHelper("log", function(data) {
+	console.log(data, 'data is logging');
+  });
+  
+  
+hbs.registerHelper( "when",function(operand_1, operator, operand_2, options) {
+	var operators = {
+		'eq': function(l,r) { return l == r; },
+		'noteq': function(l,r) { return l != r; },
+		'gt': function(l,r) { return Number(l) > Number(r); },
+		'or': function(l,r) { return l || r; },
+		'and': function(l,r) { return l && r; },
+		'%': function(l,r) { return (l % r) === 0; }
+	}
+	, result = operators[operator](operand_1,operand_2);
+
+	if (result) return options.fn(this);
+	else  return options.inverse(this);
+});
 
 const viewsDir = __dirname + "/views";
 app.engine("hbs", hbs.express4({ partialsDir: viewsDir }));
@@ -45,10 +59,6 @@ app.use(express.static(staticDir));
 
 if (devEnv) app.use(errorHandler());
 
-hbs.registerHelper("log", function(data) {
-  console.log(data);
-});
-
 const jira = new JiraClient({
 	host: "productboxpk.atlassian.net",
 	protocol: "https",
@@ -58,11 +68,12 @@ const jira = new JiraClient({
 	}
 });
 
+console.log(addon, 'addon data')
+
 routes(app, addon, jira);
 
 http.createServer(app).listen(port, () => {
   console.log("App server running at http://" + os.hostname() + ":" + port);
 
-  // Enables auto registration/de-registration of app into a host in dev mode
   if (devEnv) addon.register();
 });
