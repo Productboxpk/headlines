@@ -5,7 +5,7 @@ export default function routes(app, addon, jira) {
     res.redirect("/atlassian-connect.json");
   });
 
-  app.get("/dashboard", addon.authenticate(), async (req, res) => {
+  app.get("/headlines", addon.authenticate(), async (req, res) => {
     // jira.project
     //   .getAllProjects({
     //     expand: "description,lead,issueTypes,url,projectKeys,permissions"
@@ -88,7 +88,7 @@ export default function routes(app, addon, jira) {
     });
     issues = _.reverse(issues);
 
-    res.render("dashboard", {
+    res.render("headlines", {
       title: "Issues",
       data: issues
     });

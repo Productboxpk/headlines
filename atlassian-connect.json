@@ -23,12 +23,12 @@
     "modules": {
         "generalPages": [
             {
-                "key": "dashboard",
+                "key": "headlines",
                 "location": "system.top.navigation.bar",
                 "name": {
-                    "value": "Dashboard"
+                    "value": "Headlines"
                 },
-                "url": "/dashboard",
+                "url": "/headlines",
                 "conditions": [{
                     "condition": "user_is_logged_in"
                 }]
