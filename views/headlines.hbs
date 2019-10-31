@@ -25,11 +25,9 @@
 									<span>{{fields.assignee.displayName}}</span>
 								</div>
 								<div>
-									<img class="assignee-img" src={{histories.author.avatarUrls.16x16}} />
-									{{#each histories.items}}
-									{{#when field 'eq' 'assignee'}}
+									{{#each histories}}
+									<img class="assignee-img" src={{avatars.16x16}} />
 									<span>{{fromString}}</span>
-									{{/when}}
 									{{/each}}
 								</div>
 							</div>

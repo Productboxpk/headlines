@@ -49,6 +49,28 @@ export default function routes(app, addon, jira) {
         });
     }
 
+    for (let i = 0; i <= issues.length - 1; i++) {
+      issues[i].histories.items.avatarUrls;
+      const items = _.filter(
+        issues[i].histories.items,
+        item => item.field === "assignee"
+      );
+      issues[i].histories = items;
+      if (items.length && items[0].from) {
+        const from = items.length && items[0].from;
+
+        await jira.user
+          .getUser({ userKey: from })
+          .then(data => {
+            const avatars = data.avatarUrls;
+            issues[i].histories[0].avatars = avatars;
+          })
+          .catch(err => {
+            console.log(err, "issues err is here");
+          });
+      }
+    }
+
     issues = _.sortBy(issues, i => {
       return i.fields.updated;
     });
