@@ -6,6 +6,7 @@ export default function routes(app, addon, jira) {
   });
 
   app.get("/headlines", addon.authenticate(), async (req, res) => {
+    console.log(req, 'req,req')
     const projectKeys = [];
     let userIssues = [];
 
@@ -30,6 +31,7 @@ export default function routes(app, addon, jira) {
             "summary",
             "description",
             "assignee",
+            "issuetype",
             "updated",
             "updatedHistroy=true"
           ],
@@ -77,7 +79,8 @@ export default function routes(app, addon, jira) {
 
     res.render("headlines", {
       title: "Issues",
-      data: userIssues
+      data: userIssues,
+      projects: projectKeys
     });
   });
 }

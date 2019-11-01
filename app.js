@@ -11,6 +11,7 @@ import http from "http";
 import path from "path";
 import os from "os";
 import routes from "./routes";
+import moment from 'moment';
 
 const app = express();
 const addon = ace(app);
@@ -24,7 +25,7 @@ hbs.registerHelper("log", function(data) {
   
   
 hbs.registerHelper( "when",function(operand_1, operator, operand_2, options) {
-	var operators = {
+	const operators = {
 		'eq': function(l,r) { return l == r; },
 		'noteq': function(l,r) { return l != r; },
 		'gt': function(l,r) { return Number(l) > Number(r); },
@@ -36,6 +37,14 @@ hbs.registerHelper( "when",function(operand_1, operator, operand_2, options) {
 
 	if (result) return options.fn(this);
 	else  return options.inverse(this);
+});
+
+hbs.registerHelper("DateFormatter", function(date) {
+  const today = moment(moment().utc());
+  const updated = moment(date);
+  let diff = today.diff(moment(updated), "s");
+  diff = moment.utc(diff * 1000).format("HH:mm:ss");
+  return diff;
 });
 
 const viewsDir = __dirname + "/views";
@@ -67,8 +76,6 @@ const jira = new JiraClient({
 		api_token: "4a6PilrbcstGtYvhWhZR2C83"
 	}
 });
-
-console.log(addon, 'addon data')
 
 routes(app, addon, jira);
 
