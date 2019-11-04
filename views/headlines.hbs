@@ -22,7 +22,7 @@
 							<div id="dwarfers" class="aui-style-default aui-dropdown2">
 								<ul class="aui-list-truncate">
 									{{#each projects as |item|}}
-									<li><a id={{item}} href="/headlines?project={{item}}">{{item}}</a></li>
+									<li><a class="project-link" name={{item}}>{{item}}</a></li>
 									{{/each}}
 								</ul>
 							</div>
@@ -60,53 +60,38 @@
 		</section>
 	</div>
 </div>
-<style>
-	.member-container {
-		display: flex;
-		flex-wrap: wrap;
-	}
+<script>
+	document.onreadystatechange = function () {
+		if (document.readyState == "interactive") {
+			let elements = document.getElementsByClassName("project-link");
+			let jwt_token = $('meta[name="token"]').attr('content');
+			for (var i = 0; i <= elements.length - 1; i++) {
+				var current = elements[i]
+				current.addEventListener('click', function (data) {
+					sendReq(data.target.name)
+				})
+			}
 
-	.card {
-		text-align: center;
-		margin: 10px;
-		width: 300px;
-		box-shadow: 10px 10px 7px 0px #888888;
-		border-radius: 3px;
-	}
+			function sendReq(projectkey) {
+				console.log(projectkey)
 
-	.assignee-img {
-		vertical-align: middle;
-		width: 32px;
-	}
+				var XHR = new XMLHttpRequest();
 
-	.issue-key {
-		background: #0647a6;
-		color: #DEEBFF;
-		font-size: 16px;
-		font-weight: normal;
-		text-align: left;
-		padding: 5px 10px;
-	}
+				XHR.onreadystatechange = function () {
+					if (XHR.readyState == 4) {
+						if (XHR.status == 200) {
+							console.log(XHR.responseText);
+						} else {
+							console.log("There was a problem!!!");
+						}
+					}
+				}
 
-	.issue-summary {
-		margin: 10px 0;
-		min-height: 2rem;
-	}
+				XHR.open("GET", `headlines?projectKey=${projectkey}`);
+				XHR.setRequestHeader("Authorization", `JWT ${jwt_token}`);
+				XHR.send();
 
-	.issue-data {
-		padding: 10px;
-		display: flex;
-		position: relative;
-		justify-content: space-between;
+			}
+		}
 	}
-
-	.isssue-type-avatar {
-		vertical-align: text-bottom;
-	}
-
-	.total-issues {
-		color: black;
-		background: transparent;
-		border: none;
-	}
-</style>
+</script>

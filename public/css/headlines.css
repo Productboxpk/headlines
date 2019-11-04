@@ -1,0 +1,49 @@
+
+	.member-container {
+		display: flex;
+		flex-wrap: wrap;
+	}
+
+	.card {
+		text-align: center;
+		margin: 10px;
+		width: 300px;
+		box-shadow: 10px 10px 7px 0px #888888;
+		border-radius: 3px;
+	}
+
+	.assignee-img {
+		vertical-align: middle;
+		width: 32px;
+	}
+
+	.issue-key {
+		background: #0647a6;
+		color: #DEEBFF;
+		font-size: 16px;
+		font-weight: normal;
+		text-align: left;
+		padding: 5px 10px;
+	}
+
+	.issue-summary {
+		margin: 10px 0;
+		min-height: 2rem;
+	}
+
+	.issue-data {
+		padding: 10px;
+		display: flex;
+		position: relative;
+		justify-content: space-between;
+	}
+
+	.isssue-type-avatar {
+		vertical-align: text-bottom;
+	}
+
+	.aui-button[disabled].total-issues {
+		color: black;
+		background: transparent;
+		border: none;
+	}

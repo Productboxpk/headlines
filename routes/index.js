@@ -6,20 +6,23 @@ export default function routes(app, addon, jira) {
   });
 
   app.get("/headlines", addon.authenticate(), async (req, res) => {
-    console.log(req, 'req,req')
-    const projectKeys = [];
+    
+    const projectKeys = req.query.projectKey
+    // const projectKeys = [];
     let userIssues = [];
-
-    await jira.project
-      .getProject()
-      .then(data => {
-        data.forEach(project => {
-          projectKeys.push(project.key);
+    console.log(projectKeys, 'project keys')
+    if (_.isEmpty(projectKeys)) {
+      await jira.project
+        .getProject()
+        .then(data => {
+          data.forEach(project => {
+            projectKeys.push(project.key);
+          });
+        })
+        .catch(err => {
+          console.log(err, "project err is here");
         });
-      })
-      .catch(err => {
-        console.log(err, "project err is here");
-      });
+    }
 
     for (let i = 0; i <= projectKeys.length - 1; i++) {
       await jira.search
@@ -56,6 +59,7 @@ export default function routes(app, addon, jira) {
           console.log(err, "issues err is here");
         });
     }
+    
 
     for (let i = 0; i <= userIssues.length - 1; i++) {
       if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
