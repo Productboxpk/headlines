@@ -32,6 +32,13 @@
 					</div>
 					<div class="wrapping-container">
 						<div class="issues-container">
+							<div class="loader hide-loader">
+								<svg class="circular" viewBox="25 25 50 50">
+									<circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2"
+										stroke-miterlimit="10" />
+								</svg>
+							</div>
+
 							{{#each data}}
 							<div class="card">
 								<h4 class="issue-key">
@@ -46,7 +53,7 @@
 										<img class="assignee-img" src={{fields.assignee.avatarUrls.16x16}} />
 										<span>{{fields.assignee.displayName}}</span>
 									</div>
-
+									
 									{{#each histories}}
 									<span class="aui-icon aui-icon-small aui-iconfont-devtools-arrow-left"></span>
 									<div>
@@ -69,55 +76,3 @@
 		</section>
 	</div>
 </div>
-<script>
-	document.onreadystatechange = function () {
-		if (document.readyState == "interactive") {
-
-			let jwt_token = $('meta[name="token"]').attr('content');
-			let projectKeys = [];
-
-			function addChangeListener() {
-				let elements = document.getElementsByClassName("project-link");
-				for (let i = 0; i <= elements.length - 1; i++) {
-					const current = elements[i]
-					current.addEventListener('change', function (e) {
-						if (e.target.checked && (projectKeys.findIndex(key => key == e.target.name) === -1)) {
-							projectKeys.push(e.target.name);
-							sendReq(projectKeys.toString());
-						} else {
-							const index = projectKeys.findIndex(key => key == e.target.name)
-							projectKeys.splice(index, 1);
-							sendReq(projectKeys.toString());
-						}
-					});
-				}
-			}
-
-			function sendReq(projectkey) {
-				if (projectKeys.length > 0) {
-					console.log(projectkey)
-					var XHR = new XMLHttpRequest();
-
-					XHR.onreadystatechange = function () {
-						if (XHR.readyState == 4) {
-							if (XHR.status == 200) {
-								$("body").html(XHR.responseText);
-								addChangeListener();
-								projectKeys = [];
-
-							} else {
-								console.log("There was a problem!!!");
-							}
-						}
-					}
-
-					XHR.open("GET", `headlines?projectKey=${projectkey}`);
-					XHR.setRequestHeader("Authorization", `JWT ${jwt_token}`);
-					XHR.send();
-
-				}
-			}
-			addChangeListener();
-		}
-	}
-</script>
