@@ -5,24 +5,29 @@ export default function routes(app, addon, jira) {
     res.redirect("/atlassian-connect.json");
   });
 
+  let allProjectKeys = [];
+
   app.get("/headlines", addon.authenticate(), async (req, res) => {
-    
-    const projectKeys = req.query.projectKey
-    // const projectKeys = [];
+    let projectKeys = req.query.projectKey;
     let userIssues = [];
-    console.log(projectKeys, 'project keys')
-    if (_.isEmpty(projectKeys)) {
+
+    if (!_.isEmpty(projectKeys))
+      projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
+
+    if (_.isEmpty(allProjectKeys)) {
       await jira.project
         .getProject()
         .then(data => {
           data.forEach(project => {
-            projectKeys.push(project.key);
+            allProjectKeys.push(project.key);
           });
         })
         .catch(err => {
           console.log(err, "project err is here");
         });
     }
+
+    if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
 
     for (let i = 0; i <= projectKeys.length - 1; i++) {
       await jira.search
@@ -59,7 +64,6 @@ export default function routes(app, addon, jira) {
           console.log(err, "issues err is here");
         });
     }
-    
 
     for (let i = 0; i <= userIssues.length - 1; i++) {
       if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
@@ -84,7 +88,7 @@ export default function routes(app, addon, jira) {
     res.render("headlines", {
       title: "Issues",
       data: userIssues,
-      projects: projectKeys
+      projects: allProjectKeys
     });
   });
 }

@@ -18,42 +18,51 @@
 							</button>
 
 							<a href="#dwarfers" aria-owns="dwarfers" aria-haspopup="true"
-								class="aui-button aui-style-default aui-dropdown2-trigger">Projects</a>
+								class="aui-button aui-style-default aui-dropdown2-trigger">
+								Projects
+							</a>
 							<div id="dwarfers" class="aui-style-default aui-dropdown2">
 								<ul class="aui-list-truncate">
 									{{#each projects as |item|}}
-									<li><a class="project-link" name={{item}}>{{item}}</a></li>
+									<li><input type="checkbox" class="project-link" name={{item}}>{{item}}</a></li>
 									{{/each}}
 								</ul>
 							</div>
 						</div>
 					</div>
-					<div class="member-container">
-						{{#each data}}
-						<div class="card">
-							<h4 class="issue-key">
-								<img class="isssue-type-avatar" src={{fields.issuetype.iconUrl}}></img>
-								{{key}}
-							</h4>
-							<h5 class="issue-summary">{{fields.summary}}</h5>
-							<h6>Last updated: {{DateFormatter fields.updated}} </h6>
-							{{#if fields.assignee}}
-							<div class="issue-data">
-								<div>
-									<img class="assignee-img" src={{fields.assignee.avatarUrls.16x16}} />
-									<span>{{fields.assignee.displayName}}</span>
-								</div>
+					<div class="wrapping-container">
+						<div class="issues-container">
+							{{#each data}}
+							<div class="card">
+								<h4 class="issue-key">
+									<img class="isssue-type-avatar" src={{fields.issuetype.iconUrl}}></img>
+									{{key}}
+								</h4>
+								<h5 class="issue-summary">{{fields.summary}}</h5>
+								<h6>Last updated: {{DateFormatter fields.updated}} </h6>
+								{{#if fields.assignee}}
+								<div class="issue-data">
+									<div>
+										<img class="assignee-img" src={{fields.assignee.avatarUrls.16x16}} />
+										<span>{{fields.assignee.displayName}}</span>
+									</div>
 
-								<div>
 									{{#each histories}}
-									<= <img class="assignee-img" src={{avatars.16x16}} />
-									<span>{{fromString}}</span>
+									<span class="aui-icon aui-icon-small aui-iconfont-devtools-arrow-left"></span>
+									<div>
+										<img class="assignee-img" src={{avatars.16x16}} />
+										<span>{{fromString}}</span>
+									</div>
 									{{/each}}
 								</div>
+								{{/if}}
 							</div>
-							{{/if}}
+							{{/each}}
 						</div>
-						{{/each}}
+
+						<div class="branches-container">
+							Commits will be here
+						</div>
 					</div>
 				</div>
 			</div>
@@ -63,35 +72,52 @@
 <script>
 	document.onreadystatechange = function () {
 		if (document.readyState == "interactive") {
-			let elements = document.getElementsByClassName("project-link");
+
 			let jwt_token = $('meta[name="token"]').attr('content');
-			for (var i = 0; i <= elements.length - 1; i++) {
-				var current = elements[i]
-				current.addEventListener('click', function (data) {
-					sendReq(data.target.name)
-				})
+			let projectKeys = [];
+
+			function addChangeListener() {
+				let elements = document.getElementsByClassName("project-link");
+				for (let i = 0; i <= elements.length - 1; i++) {
+					const current = elements[i]
+					current.addEventListener('change', function (e) {
+						if (e.target.checked && (projectKeys.findIndex(key => key == e.target.name) === -1)) {
+							projectKeys.push(e.target.name);
+							sendReq(projectKeys.toString());
+						} else {
+							const index = projectKeys.findIndex(key => key == e.target.name)
+							projectKeys.splice(index, 1);
+							sendReq(projectKeys.toString());
+						}
+					});
+				}
 			}
 
 			function sendReq(projectkey) {
-				console.log(projectkey)
+				if (projectKeys.length > 0) {
+					console.log(projectkey)
+					var XHR = new XMLHttpRequest();
 
-				var XHR = new XMLHttpRequest();
+					XHR.onreadystatechange = function () {
+						if (XHR.readyState == 4) {
+							if (XHR.status == 200) {
+								$("body").html(XHR.responseText);
+								addChangeListener();
+								projectKeys = [];
 
-				XHR.onreadystatechange = function () {
-					if (XHR.readyState == 4) {
-						if (XHR.status == 200) {
-							console.log(XHR.responseText);
-						} else {
-							console.log("There was a problem!!!");
+							} else {
+								console.log("There was a problem!!!");
+							}
 						}
 					}
+
+					XHR.open("GET", `headlines?projectKey=${projectkey}`);
+					XHR.setRequestHeader("Authorization", `JWT ${jwt_token}`);
+					XHR.send();
+
 				}
-
-				XHR.open("GET", `headlines?projectKey=${projectkey}`);
-				XHR.setRequestHeader("Authorization", `JWT ${jwt_token}`);
-				XHR.send();
-
 			}
+			addChangeListener();
 		}
 	}
 </script>

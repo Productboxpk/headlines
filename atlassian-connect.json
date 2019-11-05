@@ -1,10 +1,10 @@
 {
-    "key": "my-app",
-    "name": "My app",
-    "description": "My very first app",
+    "key": "jira-git-headlines",
+    "name": "Jira & Git Headlines",
+    "description": "This plugin shows the recent updated tickets and branches of all projects a user is working on",
     "vendor": {
-        "name": "Angry Nerds",
-        "url": "https://www.atlassian.com/angrynerds"
+        "name": "Productbox",
+        "url": "https://www.productbox.dev"
     },
     "baseUrl": "{{localBaseUrl}}",
     "links": {
