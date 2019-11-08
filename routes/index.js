@@ -7,7 +7,7 @@ export default function routes(app, addon) {
 	});
 
 	app.get("/headlines", addon.checkValidToken(), async (req, res) => {
-		let allProjectKeys = ["PL", "PLUG"];
+		let allProjectKeys = [];
 		var httpClient = addon.httpClient(req);
 		let projectKeys = req.query.projectKey;
 		let userIssues = [];
