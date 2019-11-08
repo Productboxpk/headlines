@@ -36,10 +36,26 @@ export async function getAllProjectIssues(userAccountId, projectKey, httpClient)
 							histories: items
 						});
 					}
-					resolve(userIssues);
 					if (err) reject(err);
+					resolve(userIssues);
 				}
 			);
-		return {...userIssues};
+		return { ...userIssues };
+	});
+}
+
+export async function getUserByAccountId(userAccountId, accountId, httpClient) {
+    let avatars;
+    console.log(accountId, 'accountId')
+	return new Promise((resolve, reject) => {
+		httpClient
+			.asUserByAccountId(userAccountId)
+			.get(`rest/api/3/user?accountId=${accountId}`, function(err, response, body) {
+				if (err) reject(err);
+				const data = JSON.parse(body);
+				avatars = data.avatarUrls;
+				resolve(avatars);
+			});
+		return avatars;
 	});
 }
