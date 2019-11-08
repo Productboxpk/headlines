@@ -1,94 +1,38 @@
 import * as _ from "lodash";
+import { getAllProjects, getAllProjectIssues } from "../api";
 
-export default function routes(app, addon, jira) {
-  app.get("/", (req, res) => {
-    res.redirect("/atlassian-connect.json");
-  });
+export default function routes(app, addon, jar) {
+	app.get("/", (req, res) => {
+		res.redirect("/atlassian-connect.json");
+	});
 
-  let allProjectKeys = [];
+	app.get("/headlines", addon.checkValidToken(), async (req, res) => {
+		let allProjectKeys = ["PL", "PLUG"];
+		var httpClient = addon.httpClient(req);
+		let projectKeys = req.query.projectKey;
+		let userIssues = [];
+		const { addonKey, clientKey, token, hostBaseUrl, userAccountId } = req.context;
 
-  app.get("/headlines", addon.authenticate(), async (req, res) => {
-    let projectKeys = req.query.projectKey;
-    let userIssues = [];
+		if (_.isEmpty(allProjectKeys)) {
+			const data = await getAllProjects(userAccountId, httpClient);
+			allProjectKeys = _.map(data, k => k.key);
+		}
 
-    if (!_.isEmpty(projectKeys))
-      projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
+		if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
 
-    if (_.isEmpty(allProjectKeys)) {
-      await jira.project
-        .getProject()
-        .then(data => {
-          data.forEach(project => {
-            allProjectKeys.push(project.key);
-          });
-        })
-        .catch(err => {
-          console.log(err, "project err is here");
-        });
-    }
+		console.log(allProjectKeys, "Here I am");
 
-    if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
+		for (let i = 0; i <= projectKeys.length - 1; i++) {
+			let data = await getAllProjectIssues(userAccountId, projectKeys[i], httpClient);
 
-    for (let i = 0; i <= projectKeys.length - 1; i++) {
-      await jira.search
-        .search({
-          method: "GET",
-          jql: `project=${projectKeys[i]}`,
-          fields: [
-            "all",
-            "summary",
-            "description",
-            "assignee",
-            "issuetype",
-            "updated",
-            "updatedHistroy=true"
-          ],
-          expand: "changelog"
-        })
-        .then(data => {
-          const { issues } = data;
-          for (let i = 0; i <= issues.length - 1; i++) {
-            let items = _.filter(
-              issues[i].changelog.histories[0].items,
-              item => item.field === "assignee"
-            );
+			userIssues = [...userIssues, ...data];
+			console.log(userIssues, "This is issue");
+		}
 
-            userIssues.push({
-              key: issues[i].key,
-              fields: issues[i].fields,
-              histories: items
-            });
-          }
-        })
-        .catch(err => {
-          console.log(err, "issues err is here");
-        });
-    }
-
-    for (let i = 0; i <= userIssues.length - 1; i++) {
-      if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
-        const from =
-          userIssues[i].histories.length && userIssues[i].histories[0].from;
-        await jira.user
-          .getUser({ userKey: from })
-          .then(data => {
-            userIssues[i].histories[0].avatars = data.avatarUrls;
-          })
-          .catch(err => {
-            console.log(err, "get user err is here");
-          });
-      }
-    }
-
-    userIssues = _.sortBy(userIssues, i => {
-      return i.fields.updated;
-    });
-    userIssues = _.reverse(userIssues);
-
-    res.render("headlines", {
-      title: "Issues",
-      data: userIssues,
-      projects: allProjectKeys
-    });
-  });
+		res.render("headlines", {
+			title: "Issues",
+			data: userIssues,
+			projects: allProjectKeys
+		});
+	});
 }

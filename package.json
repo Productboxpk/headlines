@@ -19,7 +19,8 @@
     "lodash": "^4.17.15",
     "morgan": "^1.9.1",
     "sequelize": "^5.8.6",
-    "sqlite3": "^4.1.0"
+    "sqlite3": "^4.1.0",
+    "tough-cookie-filestore": "0.0.1"
   },
   "devDependencies": {
     "eslint": "^5.16.0"

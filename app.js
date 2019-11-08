@@ -4,7 +4,6 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import errorHandler from "errorhandler";
 import morgan from "morgan";
-import JiraClient from "jira-connector";
 import ace from "atlassian-connect-express";
 import hbs from "express-hbs";
 import http from "http";
@@ -68,16 +67,7 @@ app.use(express.static(staticDir));
 
 if (devEnv) app.use(errorHandler());
 
-const jira = new JiraClient({
-	host: "productboxpk.atlassian.net",
-	protocol: "https",
-	basic_auth: {
-		email: "syed.farhan@productbox.dev",
-		api_token: "4a6PilrbcstGtYvhWhZR2C83"
-	}
-});
-
-routes(app, addon, jira);
+routes(app, addon);
 
 http.createServer(app).listen(port, () => {
   console.log("App server running at http://" + os.hostname() + ":" + port);
