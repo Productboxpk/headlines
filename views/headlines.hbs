@@ -53,12 +53,18 @@
 										<img class="assignee-img" src={{fields.assignee.avatarUrls.16x16}} />
 										<span>{{fields.assignee.displayName}}</span>
 									</div>
-									
+
 									{{#each histories}}
+									{{#if fromString}}
 									<span class="aui-icon aui-icon-small aui-iconfont-devtools-arrow-left"></span>
+									{{/if}}
 									<div>
+										{{#if avatars}}
 										<img class="assignee-img" src={{avatars.16x16}} />
+										{{/if}}
+										{{#if fromString}}
 										<span>{{fromString}}</span>
+										{{/if}}
 									</div>
 									{{/each}}
 								</div>

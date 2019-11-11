@@ -15,7 +15,6 @@
     "esm": "^3.2.22",
     "express": "^4.16.4",
     "express-hbs": "^2.1.2",
-    "jira-connector": "^2.16.1",
     "lodash": "^4.17.15",
     "morgan": "^1.9.1",
     "sequelize": "^5.8.6",

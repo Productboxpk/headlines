@@ -2,6 +2,8 @@
     "key": "jira-git-headlines",
     "name": "Jira & Git Headlines",
     "description": "This plugin shows the recent updated tickets and branches of all projects a user is working on",
+    // "enableLicensing": true,
+    "productType": "jira",
     "vendor": {
         "name": "Productbox",
         "url": "https://www.productbox.dev"
@@ -15,10 +17,14 @@
         "type": "jwt"
     },
     "lifecycle": {
-        "installed": "/installed"
+        "installed": "/installed",
+        "enabled": "/enabled",
+        "disabled": "/disabled",
+        "uninstalled": "/uninstalled"
     },
     "scopes": [
-        "READ"
+        "READ",
+        "ACT_AS_USER"
     ],
     "modules": {
         "generalPages": [
@@ -29,9 +35,11 @@
                     "value": "Headlines"
                 },
                 "url": "/headlines",
-                "conditions": [{
-                    "condition": "user_is_logged_in"
-                }]
+                "conditions": [
+                    {
+                        "condition": "user_is_logged_in"
+                    }
+                ]
             }
         ]
     },
