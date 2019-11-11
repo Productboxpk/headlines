@@ -10,6 +10,7 @@ export default function routes(app, addon) {
 		let allProjectKeys = [];
 		var httpClient = addon.httpClient(req);
 		let projectKeys = req.query.projectKey;
+		projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
 		let userIssues = [];
 		const { userAccountId } = req.context;
 
@@ -19,13 +20,15 @@ export default function routes(app, addon) {
 		}
 
 		if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
-
-		for (let i = 0; i <= projectKeys.length - 1; i++) {
-			let data = await getAllProjectIssues(userAccountId, projectKeys[i], httpClient);
-
+		if (projectKeys.length === 1) {
+			let data = await getAllProjectIssues(userAccountId, projectKeys, httpClient);
 			userIssues = [...userIssues, ...data];
+		} else {
+			for (let i = 0; i <= projectKeys.length - 1; i++) {
+				let data = await getAllProjectIssues(userAccountId, projectKeys[i], httpClient);
+				userIssues = [...userIssues, ...data];
+			}
 		}
-
 		for (let i = 0; i <= userIssues.length - 1; i++) {
 			if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
 				const accountId = userIssues[i].histories.length && userIssues[i].histories[0].from;

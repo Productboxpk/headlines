@@ -23,20 +23,23 @@ export async function getAllProjectIssues(userAccountId, projectKey, httpClient)
 			.get(
 				`/rest/api/3/search?expand=changelog&fields=all,summary,description,assignee,updated,status,updatedHistroy=true&jql=project=${projectKey}`,
 				function(err, response, body) {
+					if (err) reject(err);
 					data = JSON.parse(body);
 					const { issues } = data;
 					for (let j = 0; j <= issues.length - 1; j++) {
-						let items = _.filter(
-							issues[j].changelog.histories[0].items,
-							item => item.field === "assignee"
-						);
+						let items = [];
+						if (issues[j].changelog.histories.length) {
+							items = _.filter(
+								issues[j].changelog.histories[0].items,
+								item => item.field === "assignee"
+							);
+						}
 						userIssues.push({
 							key: issues[j].key,
 							fields: issues[j].fields,
 							histories: items
 						});
 					}
-					if (err) reject(err);
 					resolve(userIssues);
 				}
 			);
@@ -45,8 +48,7 @@ export async function getAllProjectIssues(userAccountId, projectKey, httpClient)
 }
 
 export async function getUserByAccountId(userAccountId, accountId, httpClient) {
-    let avatars;
-    console.log(accountId, 'accountId')
+	let avatars;
 	return new Promise((resolve, reject) => {
 		httpClient
 			.asUserByAccountId(userAccountId)
