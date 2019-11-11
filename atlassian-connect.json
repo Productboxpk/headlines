@@ -1,10 +1,12 @@
 {
-    "key": "my-app",
-    "name": "My app",
-    "description": "My very first app",
+    "key": "jira-git-headlines",
+    "name": "Jira & Git Headlines",
+    "description": "This plugin shows the recent updated tickets and branches of all projects a user is working on",
+    // "enableLicensing": true,
+    "productType": "jira",
     "vendor": {
-        "name": "Angry Nerds",
-        "url": "https://www.atlassian.com/angrynerds"
+        "name": "Productbox",
+        "url": "https://www.productbox.dev"
     },
     "baseUrl": "{{localBaseUrl}}",
     "links": {
@@ -15,34 +17,29 @@
         "type": "jwt"
     },
     "lifecycle": {
-        "installed": "/installed"
+        "installed": "/installed",
+        "enabled": "/enabled",
+        "disabled": "/disabled",
+        "uninstalled": "/uninstalled"
     },
     "scopes": [
-        "READ"
+        "READ",
+        "ACT_AS_USER"
     ],
     "modules": {
         "generalPages": [
             {
-                "key": "hello-world-page-jira",
+                "key": "headlines",
                 "location": "system.top.navigation.bar",
                 "name": {
-                    "value": "Hello World"
+                    "value": "Headlines"
                 },
-                "url": "/hello-world",
-                "conditions": [{
-                    "condition": "user_is_logged_in"
-                }]
-            },
-            {
-                "key": "hello-world-page-confluence",
-                "location": "system.header/left",
-                "name": {
-                    "value": "Hello World"
-                },
-                "url": "/hello-world",
-                "conditions": [{
-                    "condition": "user_is_logged_in"
-                }]
+                "url": "/headlines",
+                "conditions": [
+                    {
+                        "condition": "user_is_logged_in"
+                    }
+                ]
             }
         ]
     },

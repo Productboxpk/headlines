@@ -1,20 +1,55 @@
+import * as _ from "lodash";
+import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../api";
+
 export default function routes(app, addon) {
-    // Redirect root path to /atlassian-connect.json,
-    // which will be served by atlassian-connect-express.
-    app.get('/', (req, res) => {
-        res.redirect('/atlassian-connect.json');
-    });
+	app.get("/", (req, res) => {
+		res.redirect("/atlassian-connect.json");
+	});
 
-    // This is an example route used by "generalPages" module (see atlassian-connect.json).
-    // Verify that the incoming request is authenticated with Atlassian Connect.
-    app.get('/hello-world', addon.authenticate(), (req, res) => {
-        // Rendering a template is easy; the render method takes two params:
-        // name of template and a json object to pass the context in.
-        res.render('hello-world', {
-            title: 'Atlassian Connect',            
-            req: req
-        });
-    });
+	app.get("/headlines", addon.checkValidToken(), async (req, res) => {
+		let allProjectKeys = [];
+		var httpClient = addon.httpClient(req);
+		let projectKeys = req.query.projectKey;
+		projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
+		let userIssues = [];
+		const { userAccountId } = req.context;
 
-    // Add additional route handlers here...
+		if (_.isEmpty(allProjectKeys)) {
+			const data = await getAllProjects(userAccountId, httpClient);
+			allProjectKeys = _.map(data, k => k.key);
+		}
+
+		if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
+		if (projectKeys.length === 1) {
+			let data = await getAllProjectIssues(userAccountId, projectKeys, httpClient);
+			userIssues = [...userIssues, ...data];
+		} else {
+			for (let i = 0; i <= projectKeys.length - 1; i++) {
+				let data = await getAllProjectIssues(userAccountId, projectKeys[i], httpClient);
+				userIssues = [...userIssues, ...data];
+			}
+		}
+		for (let i = 0; i <= userIssues.length - 1; i++) {
+			if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
+				const accountId = userIssues[i].histories.length && userIssues[i].histories[0].from;
+				userIssues[i].histories[0].avatars = await getUserByAccountId(
+					userAccountId,
+					accountId,
+					httpClient
+				);
+			}
+		}
+
+		userIssues = _.sortBy(userIssues, i => {
+			return i.fields.updated;
+		});
+
+		userIssues = _.reverse(userIssues);
+
+		res.render("headlines", {
+			title: "Issues",
+			data: userIssues,
+			projects: allProjectKeys
+		});
+	});
 }

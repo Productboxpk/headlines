@@ -1,75 +1,76 @@
-// Entry point for the app
+import express from "express";
+import bodyParser from "body-parser";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import errorHandler from "errorhandler";
+import morgan from "morgan";
+import ace from "atlassian-connect-express";
+import hbs from "express-hbs";
+import http from "http";
+import path from "path";
+import os from "os";
+import routes from "./routes";
+import moment from 'moment';
 
-// Express is the underlying that atlassian-connect-express uses:
-// https://expressjs.com
-import express from 'express';
-
-// https://expressjs.com/en/guide/using-middleware.html
-import bodyParser from 'body-parser';
-import compression from 'compression';
-import cookieParser from 'cookie-parser';
-import errorHandler from 'errorhandler';
-import morgan from 'morgan';
-
-// atlassian-connect-express also provides a middleware
-import ace from 'atlassian-connect-express';
-
-// Use Handlebars as view engine:
-// https://npmjs.org/package/express-hbs
-// http://handlebarsjs.com
-import hbs from 'express-hbs';
-
-// We also need a few stock Node modules
-import http from 'http';
-import path from 'path';
-import os from 'os';
-
-// Routes live here; this is the C in MVC
-import routes from './routes';
-
-// Bootstrap Express and atlassian-connect-express
 const app = express();
 const addon = ace(app);
 
-// See config.json
 const port = addon.config.port();
-app.set('port', port);
+app.set("port", port);
 
-// Configure Handlebars
-const viewsDir = __dirname + '/views';
-app.engine('hbs', hbs.express4({partialsDir: viewsDir}));
-app.set('view engine', 'hbs');
-app.set('views', viewsDir);
+hbs.registerHelper("log", function(data) {
+	console.log(data, 'data is logging');
+  });
+  
+  
+hbs.registerHelper( "when",function(operand_1, operator, operand_2, options) {
+	const operators = {
+		'eq': function(l,r) { return l == r; },
+		'noteq': function(l,r) { return l != r; },
+		'gt': function(l,r) { return Number(l) > Number(r); },
+		'or': function(l,r) { return l || r; },
+		'and': function(l,r) { return l && r; },
+		'%': function(l,r) { return (l % r) === 0; }
+	}
+	, result = operators[operator](operand_1,operand_2);
 
-// Log requests, using an appropriate formatter by env
-const devEnv = app.get('env') == 'development';
-app.use(morgan(devEnv ? 'dev' : 'combined'));
+	if (result) return options.fn(this);
+	else  return options.inverse(this);
+});
 
-// Include request parsers
+hbs.registerHelper("DateFormatter", function(date) {
+  const today = moment(moment().utc());
+  const updated = moment(date);
+  let diff = today.diff(moment(updated), "s");
+  diff = moment.utc(diff * 1000).format("HH:mm:ss");
+  return diff;
+});
+
+const viewsDir = __dirname + "/views";
+app.engine("hbs", hbs.express4({ partialsDir: viewsDir }));
+app.set("view engine", "hbs");
+app.set("views", viewsDir);
+
+const devEnv = app.get("env") == "development";
+app.use(morgan(devEnv ? "dev" : "combined"));
+
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Gzip responses when appropriate
 app.use(compression());
 
-// Include atlassian-connect-express middleware
 app.use(addon.middleware());
 
-// Mount the static files directory
-const staticDir = path.join(__dirname, 'public');
+const staticDir = path.join(__dirname, "public");
 app.use(express.static(staticDir));
 
-// Show nicer errors in dev mode
 if (devEnv) app.use(errorHandler());
 
-// Wire up routes
 routes(app, addon);
 
-// Boot the HTTP server
 http.createServer(app).listen(port, () => {
-  console.log('App server running at http://' + os.hostname() + ':' + port);
+  console.log("App server running at http://" + os.hostname() + ":" + port);
 
-  // Enables auto registration/de-registration of app into a host in dev mode
   if (devEnv) addon.register();
 });

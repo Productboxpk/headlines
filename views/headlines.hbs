@@ -1,0 +1,84 @@
+{{!< layout}}
+<header class="aui-page-header">
+	<div class="aui-page-header-inner">
+		<div class="aui-page-header-main intro-header">
+			<h1>{{title}}</h1>
+		</div>
+	</div>
+</header>
+<div class="aui-page-panel main-panel">
+	<div class="aui-page-panel-inner">
+		<section class="aui-page-panel-item">
+			<div class="aui-group">
+				<div class="aui-item">
+					<div class="aui-toolbar" role="toolbar">
+						<div class="aui-toolbar-inner">
+							<button disabled class="aui-button total-issues">Total Issues:
+								<span class="aui-badge">{{data.length}}</span>
+							</button>
+
+							<a href="#dwarfers" aria-owns="dwarfers" aria-haspopup="true"
+								class="aui-button aui-style-default aui-dropdown2-trigger">
+								Projects
+							</a>
+							<div id="dwarfers" class="aui-style-default aui-dropdown2">
+								<ul class="aui-list-truncate">
+									{{#each projects as |item|}}
+									<li><input type="checkbox" class="project-link" name={{item}}>{{item}}</a></li>
+									{{/each}}
+								</ul>
+							</div>
+						</div>
+					</div>
+					<div class="wrapping-container">
+						<div class="issues-container">
+							<div class="loader hide-loader">
+								<svg class="circular" viewBox="25 25 50 50">
+									<circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2"
+										stroke-miterlimit="10" />
+								</svg>
+							</div>
+
+							{{#each data}}
+							<div class="card">
+								<h4 class="issue-key">
+									<img class="isssue-type-avatar" src={{fields.issuetype.iconUrl}}></img>
+									{{key}}
+								</h4>
+								<h5 class="issue-summary">{{fields.summary}}</h5>
+								<h6>Last updated: {{DateFormatter fields.updated}} </h6>
+								{{#if fields.assignee}}
+								<div class="issue-data">
+									<div>
+										<img class="assignee-img" src={{fields.assignee.avatarUrls.16x16}} />
+										<span>{{fields.assignee.displayName}}</span>
+									</div>
+
+									{{#each histories}}
+									{{#if fromString}}
+									<span class="aui-icon aui-icon-small aui-iconfont-devtools-arrow-left"></span>
+									{{/if}}
+									<div>
+										{{#if avatars}}
+										<img class="assignee-img" src={{avatars.16x16}} />
+										{{/if}}
+										{{#if fromString}}
+										<span>{{fromString}}</span>
+										{{/if}}
+									</div>
+									{{/each}}
+								</div>
+								{{/if}}
+							</div>
+							{{/each}}
+						</div>
+
+						<div class="branches-container">
+							Commits will be here
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
