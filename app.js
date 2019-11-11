@@ -69,8 +69,8 @@ if (devEnv) app.use(errorHandler());
 
 routes(app, addon);
 
-http.createServer(app).listen(port, () => {
-  console.log("App server running at http://" + os.hostname() + ":" + port);
+app.listen(process.env.PORT || port, () => {
+  console.log("App server running at http://" + os.hostname() + ":" + process.env.PORT  || port);
 
   if (devEnv) addon.register();
 });
