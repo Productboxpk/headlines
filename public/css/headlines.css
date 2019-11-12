@@ -133,25 +133,26 @@
 .wrapping-container {
 	width: 100%;
 	display: flex;
+	margin: 20px;
 }
 .issues-container, .branches-container {
+	background-color: #efefef;
 	width: 50%;
-	margin: 10px 20px;
+	padding: 10px 20px;
 }
 
 .card {
+	background-color: #fff;
 	text-align: center;
-	margin: 0 auto;
-	margin-bottom: 20px;
     margin-top: 10px;
-	/* width: 300px; */
-	box-shadow: 10px 10px 7px 0px #888888;
+	box-shadow: 2px 2px 2px 0px #d2d2d2;
 	border-radius: 3px;
+	border: 1px solid #d2d2d2;
 }
 
 .assignee-img {
 	vertical-align: middle;
-	width: 32px;
+	width: 25px;
 }
 
 .issue-key {
@@ -170,7 +171,7 @@
 }
 
 .issue-data {
-	padding: 10px;
+	padding: 0px 10px 5px 10px;
 	display: flex;
 	position: relative;
 	justify-content: space-between;
