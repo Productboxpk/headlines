@@ -16,8 +16,8 @@ const app = express();
 const addon = ace(app);
 
 const port = addon.config.port();
-app.set("port", port);
-
+const PORT = process.env.PORT || port;
+app.set("port", PORT);
 hbs.registerHelper("log", function(data) {
 	console.log(data, 'data is logging');
   });
@@ -68,8 +68,6 @@ app.use(express.static(staticDir));
 if (devEnv) app.use(errorHandler());
 
 routes(app, addon);
-
-const PORT = process.env.PORT || port;
 
 app.listen(PORT, () => {
   console.log("App server running at http://" + os.hostname() + ":" + PORT);
