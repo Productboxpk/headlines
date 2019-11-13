@@ -11,6 +11,7 @@ import path from "path";
 import os from "os";
 import routes from "./routes";
 import moment from "moment";
+import sequelize from 'sequelize';
 
 const app = express();
 const addon = ace(app);
@@ -21,7 +22,7 @@ app.set("port", PORT);
 hbs.registerHelper("log", function(data) {
 	console.log(data, "data is logging");
 });
-  
+
   
 hbs.registerHelper( "when",function(operand_1, operator, operand_2, options) {
 	const operators = {

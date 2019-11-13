@@ -34,21 +34,21 @@
         //
         // To configure PostgreSQL, the following can be used:
         //
-        //   "store": {
-        //     "adapter": "sequelize",
-        //     "dialect": "postgres",
-        //     "url": "postgres://localhost/my_app_database"
-        //   },
+        "store": {
+            "adapter": "sequelize",
+            "dialect": "postgres",
+            "url": "postgres://localhost/jira"
+        }
         //
         // An appropriate DB driver for Sequelize is required for storage other than memory.
         // For PostgreSQL, run the following command:
         //
         //   npm install --save pg
-        "store": {
-            "adapter": "sequelize",
-            "dialect": "sqlite3",
-            "type": "memory"
-        }
+        // "store": {
+        //     "adapter": "sequelize",
+        //     "dialect": "sqlite3",
+        //     "type": "memory"
+        // }
     },
     // Configuration for production, which is enabled by setting
     // the NODE_ENV=production environment variable.

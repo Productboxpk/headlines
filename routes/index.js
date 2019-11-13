@@ -1,7 +1,8 @@
 import * as _ from "lodash";
-import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../api";
+import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../api/jiraApi";
 
 export default function routes(app, addon) {
+
 	app.get("/", (req, res) => {
 		res.redirect("/atlassian-connect.json");
 	});
