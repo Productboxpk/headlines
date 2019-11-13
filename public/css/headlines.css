@@ -130,14 +130,20 @@
 }
 /* LOADER */
 
+
+#content > .aui-page-header:first-child{
+	width: auto;
+}
+
 .wrapping-container {
 	width: 100%;
 	display: flex;
-	margin: 20px;
+	margin: 20px 0;
 }
 .issues-container, .branches-container {
 	background-color: #efefef;
 	width: 50%;
+	margin: 0 5px;
 	padding: 10px 20px;
 }
 

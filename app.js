@@ -10,7 +10,7 @@ import http from "http";
 import path from "path";
 import os from "os";
 import routes from "./routes";
-import moment from 'moment';
+import moment from "moment";
 
 const app = express();
 const addon = ace(app);
@@ -19,18 +19,18 @@ const port = addon.config.port();
 const PORT = process.env.PORT || port;
 app.set("port", PORT);
 hbs.registerHelper("log", function(data) {
-	console.log(data, 'data is logging');
-  });
+	console.log(data, "data is logging");
+});
   
   
 hbs.registerHelper( "when",function(operand_1, operator, operand_2, options) {
 	const operators = {
-		'eq': function(l,r) { return l == r; },
-		'noteq': function(l,r) { return l != r; },
-		'gt': function(l,r) { return Number(l) > Number(r); },
-		'or': function(l,r) { return l || r; },
-		'and': function(l,r) { return l && r; },
-		'%': function(l,r) { return (l % r) === 0; }
+		"eq": function(l,r) { return l == r; },
+		"noteq": function(l,r) { return l != r; },
+		"gt": function(l,r) { return Number(l) > Number(r); },
+		"or": function(l,r) { return l || r; },
+		"and": function(l,r) { return l && r; },
+		"%": function(l,r) { return (l % r) === 0; }
 	}
 	, result = operators[operator](operand_1,operand_2);
 
@@ -39,11 +39,11 @@ hbs.registerHelper( "when",function(operand_1, operator, operand_2, options) {
 });
 
 hbs.registerHelper("DateFormatter", function(date) {
-  const today = moment(moment().utc());
-  const updated = moment(date);
-  let diff = today.diff(moment(updated), "s");
-  diff = moment.utc(diff * 1000).format("HH:mm:ss");
-  return diff;
+	const today = moment(moment().utc());
+	const updated = moment(date);
+	let diff = today.diff(moment(updated), "s");
+	diff = moment.utc(diff * 1000).format("HH:mm:ss");
+	return diff;
 });
 
 const viewsDir = __dirname + "/views";
@@ -70,7 +70,7 @@ if (devEnv) app.use(errorHandler());
 routes(app, addon);
 
 app.listen(PORT, () => {
-  console.log("App server running at http://" + os.hostname() + ":" + PORT);
+	console.log("App server running at http://" + os.hostname() + ":" + PORT);
 
-  if (devEnv) addon.register();
+	if (devEnv) addon.register();
 });
