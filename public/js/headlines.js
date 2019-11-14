@@ -15,9 +15,40 @@ document.onreadystatechange = function() {
       AJS.dialog2("#credential-dialog").hide();
     });
 
-    function addChangeListener() {
+    function addEventListeners() {
       let elements = document.getElementsByClassName("project-link");
       let loader = document.getElementsByClassName("loader")[0];
+
+      let username = document.getElementById("github-username");
+      let accessToken = document.getElementById("access-token");
+      let repoOwner = document.getElementById("repo-owner");
+      let repoName = document.getElementById("repo-name");
+      let saveButton = document.getElementById("save-button");
+
+      saveButton.addEventListener("onsubmit", (e) => {
+        e.preventDefault();
+
+        console.log(username.value);
+        console.log(accessToken.value);
+        console.log(repoOwner.value);
+        console.log(repoName.value);
+      });
+
+      username.addEventListener("keydown", data => {
+        data.key;
+      });
+
+      accessToken.addEventListener("keydown", data => {
+        data.key;
+      });
+
+      repoOwner.addEventListener("keydown", data => {
+        data.key;
+      });
+
+      repoName.addEventListener("keydown", data => {
+        data.key;
+      });
 
       for (let i = 0; i <= elements.length - 1; i++) {
         const current = elements[i];
@@ -48,7 +79,7 @@ document.onreadystatechange = function() {
             if (XHR.status == 200) {
               $("body").html(XHR.responseText);
               loader.classList.add("hide-loader");
-              addChangeListener();
+              addEventListeners();
               projectKeys = [];
             } else {
               console.log("There was a problem!!!");
@@ -61,6 +92,6 @@ document.onreadystatechange = function() {
         XHR.send();
       }
     }
-    addChangeListener();
+    addEventListeners();
   }
 };

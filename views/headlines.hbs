@@ -87,24 +87,24 @@
 											<label for="access-token">repo Name
 												<span class="aui-icon icon-required">(required)</span>
 											</label>
-											<input class="text" type="text" id="repo-name" name="repo-name"
+											<input autocomplete="current-password" class="text" type="text" id="repo-name" name="repo-name"
 												placeholder="Name of the repo">
 											<div class="description">
 												Enter the name of the repo you want to add
 											</div>
 										</div>
 
-										{{!-- <div class="buttons-container">
+										<div class="buttons-container">
 											<div class="buttons">
 												<input class="button submit" type="submit" value="Save"
-													id="comment-save-button">
-												<a class="cancel" href="#">Cancel</a>
+													id="save-button">
+												<a class="cancel" id="dialog-close-button" href="#">Cancel</a>
 											</div>
-										</div> --}}
+										</div>
 									</form>
 								</div>
 								<!-- Dialog footer -->
-								<footer class="aui-dialog2-footer">
+								{{!-- <footer class="aui-dialog2-footer">
 									<!-- Actions to render on the right of the footer -->
 									<div class="aui-dialog2-footer-actions">
 										<button class="aui-button aui-button-primary">
@@ -116,7 +116,7 @@
 									</div>
 
 									{{!-- <div class="aui-dialog2-footer-hint">This is a hint.</div> --}}
-								</footer>
+								</footer> --}}
 							</section>
 
 						</div>
