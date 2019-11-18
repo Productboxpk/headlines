@@ -1,13 +1,41 @@
 import * as _ from "lodash";
-import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../api/jiraApi";
+import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../lib/api/jiraApi";
+import {Installations} from '../db';
 
 export default function routes(app, addon) {
 
-	app.get("/", (req, res) => {
+	app.post("/installed", async (req, res, next) => {
+	console.log("Received installation payload");
+    const {clientKey, oauthClientId, publicKey, sharedSecret, baseUrl, eventType } = req.body;
+	await Installations.create({
+    client_key: clientKey,
+    oauth_client_id: oauthClientId,
+    public_key: publicKey,
+    shared_secret: sharedSecret,
+    jira_host: baseUrl,
+    event_type: eventType
+  })
+    .then(data => {
+      return res.sendStatus(204);
+    })
+    .catch(err => {
+      console.log(err, "save err");
+      return res.sendStatus(500);
+    });
+
+  });
+
+	app.get("/",(req, res) => {
 		res.redirect("/atlassian-connect.json");
 	});
 
-	app.get("/headlines", addon.checkValidToken(), async (req, res) => {
+	app.get("/headlines", async (req, res) => {
+		console.log('addonIs', addon, 'addonIs')
+		// Installations.findAll({
+		// 	where: {
+		// 		client_key: 
+		// 	}
+		// })
 		let allProjectKeys = [];
 		var httpClient = addon.httpClient(req);
 		let projectKeys = req.query.projectKey;

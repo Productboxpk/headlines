@@ -1,0 +1,26 @@
+{
+    "development": {
+        "database": "jira",
+        "username": "careaxiom",
+        "password": "1234",
+        "host": "127.0.0.1",
+        "dialect": "postgres",
+        "operatorsAliases": false
+    },
+    "test": {
+        "database": "jira-test",
+        "host": "127.0.0.1",
+        "dialect": "postgres",
+        "operatorsAliases": false
+    },
+    "production": {
+        "dialect": "postgres",
+        "use_env_variable": "DATABASE_URL",
+        "disable_sql_logging": true,
+        "operatorsAliases": false,
+        "ssl": true,
+        "dialectOptions": {
+            "ssl": true
+        }
+    }
+}
