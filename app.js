@@ -9,7 +9,7 @@ import hbs from "express-hbs";
 import path from "path";
 import routes from "./routes";
 
-import handlbarsHelpers from './lib/helpers';
+import handlbarsHelpers from "./lib/helpers";
 
 const app = express();
 const addon = ace(app);
@@ -44,7 +44,7 @@ if (devEnv) app.use(errorHandler());
 routes(app, addon);
 
 app.listen(PORT, () => {
-	console.log("App server running at http://" + addon.config.localBaseUrl + ":" + PORT);
+    console.log("App server running at http://" + addon.config.localBaseUrl + ":" + PORT);
 
-	if (devEnv) addon.register();
+    if (devEnv) addon.register();
 });
