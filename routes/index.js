@@ -1,12 +1,10 @@
 import * as _ from "lodash";
 import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../lib/api/jiraApi";
 import { Installations } from "../db";
-import { githubAuth, asInstallation } from "../lib/middlewares";
 import axios from "axios";
 
 export default function routes(app, addon) {
     app.post("/installed", async (req, res, next) => {
-        console.log("Received installation payload");
         const { clientKey, oauthClientId, publicKey, sharedSecret, baseUrl, eventType } = req.body;
         req.session.clientKey = clientKey;
         await Installations.findByPk(clientKey)
@@ -38,12 +36,12 @@ export default function routes(app, addon) {
     });
 
     app.get("/", (req, res) => {
-        console.log(req.session.accessToken);
         res.redirect("/atlassian-connect.json");
     });
 
     app.get("/headlines", addon.checkValidToken(), async (req, res, next) => {
         const { userAccountId, clientKey } = req.context;
+        process.env.jira_client_key = clientKey;
 
         if (!req.session.clientKey) {
             req.session.clientKey = clientKey;
@@ -118,8 +116,6 @@ export default function routes(app, addon) {
         const githubClientSecret = process.env.client_secret;
         const requestToken = req.query.code;
 
-        console.log(req.query, "incoming query");
-
         await axios({
             method: "post",
             url: `https://github.com/login/oauth/access_token?client_id=${githubClientID}&client_secret=${githubClientSecret}&code=${requestToken}`,
@@ -133,24 +129,34 @@ export default function routes(app, addon) {
             })
             .catch(err => console.log("Access Token error is here", err));
 
-        const response = await axios({
+        const { status } = await axios({
             method: "GET",
-            url:"https://api.github.com/user", 
+            url: "https://api.github.com/user",
             headers: {
                 Authorization: `token ${req.session.accessToken}`
             }
         });
-        console.log(response, "req respones");
+        if (status == 200) {
+            await Installations.findByPk(process.env.jira_client_key)
+                .then(client => {
+                    client
+                        .update({
+                            github_access_token: req.session.accessToken
+                        })
+                        .then(data => {
+                            res.redirect(`${data.jira_host}/plugins/servlet/ac/jira-git-headlines/headlines`)
+                        }) 
+                        .catch(err => console.log("Update err", err));
+                })
+                .catch(err => console.log("Find err", err));
+        }
     });
 
-    // app.post("/github/events", (req, res, next) => {
-    //     console.log(req, "Webhook url");
-    // });
+    app.post("/github/events", (req, res, next) => {
+        console.log(req, "Webhook url");
+    });
 
     app.get("/github-setup", (req, res, next) => {
-        // const githubClientID = process.env.client_id;
-        //     res.redirect(`https://github.com/login/oauth/authorize?scope=user:email&client_id=${githubClientID}`);
-        //     // res.redirect("https://github.com/login/oauth/authorize");
         res.redirect("https://github.com/settings/apps/jira-git-headlines/installations");
     });
 }
