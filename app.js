@@ -8,7 +8,8 @@ import ace from "atlassian-connect-express";
 import hbs from "express-hbs";
 import path from "path";
 import routes from "./routes";
-
+import expressSession from "express-session";
+import { v4 as uuid } from "uuid";
 import handlbarsHelpers from "./lib/helpers";
 
 const app = express();
@@ -33,7 +34,16 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(compression());
-
+app.use(
+    expressSession({
+        secret: process.env.session_secret,
+        resave: true,
+        saveUninitialized: true,
+        genid: function(req) {
+            return uuid();
+        }
+    })
+);
 app.use(addon.middleware());
 
 const staticDir = path.join(__dirname, "public");
