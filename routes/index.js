@@ -1,36 +1,12 @@
 import * as _ from "lodash";
-import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../lib/api/jiraApi";
+import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../lib/api/jira";
+import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "../lib/api/github";
 import { Installations } from "../db";
-import axios from "axios";
+import { findAndUpdateElseInsert, findByClientKey } from "../lib/models/installation";
 
 export default function routes(app, addon) {
     app.post("/installed", async (req, res, next) => {
-        const { clientKey, oauthClientId, publicKey, sharedSecret, baseUrl, eventType } = req.body;
-        req.session.clientKey = clientKey;
-        await Installations.findByPk(clientKey)
-            .then(client => {
-                return client.update({
-                    oauth_client_id: oauthClientId,
-                    public_key: publicKey,
-                    shared_secret: sharedSecret,
-                    jira_host: baseUrl,
-                    event_type: eventType
-                });
-            })
-            .catch(async err => {
-                await Installations.create({
-                    client_key: clientKey,
-                    oauth_client_id: oauthClientId,
-                    public_key: publicKey,
-                    shared_secret: sharedSecret,
-                    jira_host: baseUrl,
-                    event_type: eventType
-                }).catch(err => {
-                    console.log(err, "save err");
-                    return res.sendStatus(500);
-                });
-            });
-
+        await findAndUpdateElseInsert(Installations, req.body);
         next();
         return res.sendStatus(204);
     });
@@ -42,16 +18,44 @@ export default function routes(app, addon) {
     app.get("/headlines", addon.checkValidToken(), async (req, res, next) => {
         const { userAccountId, clientKey } = req.context;
         process.env.jira_client_key = clientKey;
-
-        if (!req.session.clientKey) {
-            req.session.clientKey = clientKey;
-        }
-
         var httpClient = addon.httpClient(req);
         let allProjectKeys = [];
         let projectKeys = req.query.projectKey;
         let userIssues = [];
+        const data = await findByClientKey(Installations, clientKey);
 
+        let gitHubData = [];
+
+        if (!_.isEmpty(data && data.github_access_token)) {
+            let orgsReposData = [];
+            const accessToken = data.github_access_token;
+
+            const { data: orgs } = await getCurrentUserOrganizations(accessToken);
+            for (let i = 0; i <= orgs.length - 1; i++) {
+                const { data } = await get(accessToken, orgs[i].repos_url);
+                orgsReposData = [...orgsReposData, ...data];
+            }
+
+            let commitLink;
+
+            for (let i = 0; i <= orgsReposData.length - 1; i++) {
+                const branches = orgsReposData[i].branches_url.slice(0, -9);
+                const { data: branchesData } = await get(accessToken, branches);
+
+                gitHubData = [...gitHubData, ...branchesData];
+
+                commitLink = orgsReposData[i].commits_url.slice(0, -6);
+            }
+
+            for (let i = 0; i <= gitHubData.length - 1; i++) {
+                commitLink = commitLink + "?" + gitHubData[i].commit.sha;
+                const { data: commitsData } = await get(accessToken, commitLink);
+                gitHubData[i].branch_commits = commitsData;
+            }
+            console.log(gitHubData, "gitHubData");
+        }
+
+        // jira requests
         projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
 
         if (_.isEmpty(allProjectKeys)) {
@@ -107,45 +111,31 @@ export default function routes(app, addon) {
         res.render("headlines", {
             title: "Issues",
             data: userIssues,
-            projects: allProjectKeys
+            projects: allProjectKeys,
+            gitHubData: gitHubData
         });
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
-        const githubClientID = process.env.client_id;
-        const githubClientSecret = process.env.client_secret;
         const requestToken = req.query.code;
 
-        await axios({
-            method: "post",
-            url: `https://github.com/login/oauth/access_token?client_id=${githubClientID}&client_secret=${githubClientSecret}&code=${requestToken}`,
-            headers: {
-                accept: "application/json"
-            }
-        })
-            .then(response => {
-                req.session.accessToken = response.data.access_token;
-                console.log(`/welcome.html?access_token=${req.session.accessToken}`);
-            })
-            .catch(err => console.log("Access Token error is here", err));
+        const accessToken = await authorizeApp(requestToken);
 
-        const { status } = await axios({
-            method: "GET",
-            url: "https://api.github.com/user",
-            headers: {
-                Authorization: `token ${req.session.accessToken}`
-            }
-        });
+        // testing token
+        const { status } = await getCurrentUser(accessToken);
+
         if (status == 200) {
             await Installations.findByPk(process.env.jira_client_key)
                 .then(client => {
                     client
                         .update({
-                            github_access_token: req.session.accessToken
+                            github_access_token: accessToken
                         })
                         .then(data => {
-                            res.redirect(`${data.jira_host}/plugins/servlet/ac/jira-git-headlines/headlines`)
-                        }) 
+                            res.redirect(
+                                `${data.jira_host}/plugins/servlet/ac/jira-git-headlines/headlines`
+                            );
+                        })
                         .catch(err => console.log("Update err", err));
                 })
                 .catch(err => console.log("Find err", err));
