@@ -29,7 +29,7 @@
 								</ul>
 							</div>
 
-							<a href="/github-setup" target="_blank" >Click to Setup GitHub</a>
+							<a href="/github-setup" target="_blank">Click to Setup GitHub</a>
 						</div>
 					</div>
 					<div class="wrapping-container">
@@ -76,7 +76,18 @@
 						</div>
 
 						<div class="branches-container">
-							Commits will be here
+							{{#each gitHubData}}
+							
+							<div class="card">
+								<h4 class="issue-key">
+									{{name}}
+								</h4>
+								{{#each branch_commits}}
+								<h5 class="issue-summary">Commit by: {{commit.committer.name}}</h5>
+								<h5 class="issue-summary">Message: {{commit.message}}</h5>
+								{{/each}}
+							</div>
+							{{/each}}
 						</div>
 					</div>
 				</div>
