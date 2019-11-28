@@ -76,11 +76,12 @@
 						</div>
 
 						<div class="branches-container">
+							{{!-- {{log gitHubData}} --}}
 							{{#each gitHubData}}
-							
+							{{log branchesData}}
 							<div class="card">
 								<h4 class="issue-key">
-									{{name}}
+									{{repoName}}
 								</h4>
 								{{#each branch_commits}}
 								<h5 class="issue-summary">Commit by: {{commit.committer.name}}</h5>
