@@ -45,8 +45,10 @@ export default function routes(app, addon) {
                 let commitsData = [];
 
                 for (let j = 0; j <= branchesData.length - 1; j++) {
-                    commitLink = commitLink + "?" + branchesData[j].commit.sha;
-                    let { data: commits } = await get(accessToken, commitLink);
+                    let { data: commits } = await get(
+                        accessToken,
+                        commitLink + "?sha=" + branchesData[j].commit.sha
+                    );
                     commits = { [branchesData[j].name]: commits };
                     commitsData = [...commitsData, commits];
                 }
@@ -72,13 +74,11 @@ export default function routes(app, addon) {
                                 date: v.commit.committer.date
                             };
                         });
-                        console.log(commitsData, "yaar bus na");
                         gitHubData = [...gitHubData, ...commitsData];
                     });
                 });
             }
         }
-
         // jira requests
         projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
 
@@ -129,8 +129,12 @@ export default function routes(app, addon) {
         userIssues = _.sortBy(userIssues, i => {
             return i.fields.updated;
         });
-
         userIssues = _.reverse(userIssues);
+
+        gitHubData = _.sortBy(gitHubData, commit => {
+            return commit.date;
+        });
+        gitHubData = _.reverse(gitHubData);
 
         res.render("headlines", {
             title: "Issues",
