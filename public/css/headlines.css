@@ -148,7 +148,7 @@
 }
 
 .card {
-	background-color: #fff;
+	background-color: #f6f8fa;
 	text-align: center;
     margin-top: 10px;
 	box-shadow: 2px 2px 2px 0px #d2d2d2;
@@ -194,4 +194,21 @@
 }
 span.aui-iconfont-devtools-arrow-left{
 	align-self: center;
+}
+
+
+
+
+/* ///////////////////////////// */
+/* github */
+
+.github-title{
+	background: #23282e;
+	color: #DEEBFF;
+	display: flex;
+	justify-content: space-evenly;
+	font-size: 16px;
+	font-weight: normal;
+	text-align: left;
+	padding: 5px 10px;
 }
