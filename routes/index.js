@@ -48,7 +48,7 @@ export default function routes(app, addon) {
 
                     let { data: commitsData } = await get(accessToken, commitLink);
 
-                commitsData = _.map(commitsData, commit => {
+                    commitsData = _.map(commitsData, commit => {
                         return {
                             repo: {
                                 name: orgsReposData[i].name,
@@ -69,13 +69,13 @@ export default function routes(app, addon) {
                             date: commit.commit.committer.date
                         };
                     });
+                    // need to send commitsData to front
+                    console.log(commitsData, 'for front')
                     return [...commitsData];
                 });
-                console.log(pickedData, "inside");
+                console.log(pickedData, 'getting here here')    
             }
-
-            console.log(pickedData, "outsideData");
-            console.log(gitHubData, "with commits data");
+            console.log(pickedData, 'saving here')
         }
 
         // // jira requests
