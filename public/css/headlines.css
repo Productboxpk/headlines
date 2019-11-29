@@ -195,3 +195,20 @@
 span.aui-iconfont-devtools-arrow-left{
 	align-self: center;
 }
+
+
+
+
+/* ///////////////////////////// */
+/* github */
+
+.github-title{
+	background: #0647a6;
+	color: #DEEBFF;
+	display: flex;
+	justify-content: space-evenly;
+	font-size: 16px;
+	font-weight: normal;
+	text-align: left;
+	padding: 5px 10px;
+}

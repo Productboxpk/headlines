@@ -35,7 +35,6 @@ export default function routes(app, addon) {
                 const { data } = await get(accessToken, orgs[i].repos_url);
                 orgsReposData = [...orgsReposData, ...data];
             }
-            let pickedData = [];
 
             for (let i = 0; i <= orgsReposData.length - 1; i++) {
                 const branchLink = orgsReposData[i].branches_url.slice(0, -9);
@@ -43,91 +42,93 @@ export default function routes(app, addon) {
 
                 let { data: branchesData } = await get(accessToken, branchLink);
 
-                pickedData = _.map(branchesData, async branch => {
-                    commitLink = commitLink + "?" + branch.commit.sha;
+                let commitsData = [];
 
-                    let { data: commitsData } = await get(accessToken, commitLink);
-
-                    commitsData = _.map(commitsData, commit => {
-                        return {
-                            repo: {
-                                name: orgsReposData[i].name,
-                                owner: {
-                                    name: orgsReposData[i].owner.login,
-                                    avatarUrl: orgsReposData[i].owner.avatar_url
-                                }
-                            },
-                            branchName: branch.name,
-                            key: commit.sha,
-                            message: commit.commit.message,
-                            committer: {
-                                avatarUrl: commit.committer.avatar_url,
-                                name: commit.committer.login,
-                                id: commit.committer.id,
-                                type: commit.committer.type
-                            },
-                            date: commit.commit.committer.date
-                        };
+                for (let j = 0; j <= branchesData.length - 1; j++) {
+                    commitLink = commitLink + "?" + branchesData[j].commit.sha;
+                    let { data: commits } = await get(accessToken, commitLink);
+                    commits = { [branchesData[j].name]: commits };
+                    commitsData = [...commitsData, commits];
+                }
+                _.map(commitsData, commits => {
+                    _.mapValues(commits, (value, key) => {
+                        commitsData = _.map(value, v => {
+                            return {
+                                repo: {
+                                    name: orgsReposData[i].name,
+                                    owner: {
+                                        name: orgsReposData[i].owner.login,
+                                        avatarUrl: orgsReposData[i].owner.avatar_url
+                                    }
+                                },
+                                branchName: key,
+                                message: v.commit.message,
+                                committer: {
+                                    avatarUrl: v.committer.avatar_url,
+                                    name: v.committer.login,
+                                    id: v.committer.id,
+                                    type: v.committer.type
+                                },
+                                date: v.commit.committer.date
+                            };
+                        });
+                        console.log(commitsData, "yaar bus na");
+                        gitHubData = [...gitHubData, ...commitsData];
                     });
-                    // need to send commitsData to front
-                    console.log(commitsData, 'for front')
-                    return [...commitsData];
                 });
-                console.log(pickedData, 'getting here here')    
             }
-            console.log(pickedData, 'saving here')
         }
 
-        // // jira requests
-        // projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
+        // jira requests
+        projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
 
-        // if (_.isEmpty(allProjectKeys)) {
-        //     try {
-        //         const data = await getAllProjects(userAccountId, httpClient);
-        //         allProjectKeys = _.map(data, k => k.key);
-        //     } catch (err) {
-        //         console.log(err, "Error is here");
-        //     }
-        // }
+        if (_.isEmpty(allProjectKeys)) {
+            try {
+                const data = await getAllProjects(userAccountId, httpClient);
+                allProjectKeys = _.map(data, k => k.key);
+            } catch (err) {
+                console.log(err, "Error is here");
+            }
+        }
 
-        // if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
+        if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
 
-        // if (projectKeys.length === 1) {
-        //     try {
-        //         let data = await getAllProjectIssues(userAccountId, projectKeys, httpClient);
-        //         userIssues = [...userIssues, ...data];
-        //     } catch (err) {
-        //         console.log(err, "Error is here");
-        //     }
-        // } else {
-        //     try {
-        //         for (let i = 0; i <= projectKeys.length - 1; i++) {
-        //             let data = await getAllProjectIssues(userAccountId, projectKeys[i], httpClient);
-        //             userIssues = [...userIssues, ...data];
-        //         }
-        //     } catch (err) {
-        //         console.log(err, "Error is here");
-        //     }
-        // }
-        // try {
-        //     for (let i = 0; i <= userIssues.length - 1; i++) {
-        //         if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
-        //             const accountId =
-        //                 userIssues[i].histories.length && userIssues[i].histories[0].from;
-        //             userIssues[i].histories[0].avatars = await getUserByAccountId(
-        //                 userAccountId,
-        //                 accountId,
-        //                 httpClient
-        //             );
-        //         }
-        //     }
-        // } catch (err) {
-        //     console.log(err, "Error is here");
-        // }
+        if (projectKeys.length === 1) {
+            try {
+                let data = await getAllProjectIssues(userAccountId, projectKeys, httpClient);
+                userIssues = [...userIssues, ...data];
+            } catch (err) {
+                console.log(err, "Error is here");
+            }
+        } else {
+            try {
+                for (let i = 0; i <= projectKeys.length - 1; i++) {
+                    let data = await getAllProjectIssues(userAccountId, projectKeys[i], httpClient);
+                    userIssues = [...userIssues, ...data];
+                }
+            } catch (err) {
+                console.log(err, "Error is here");
+            }
+        }
+        try {
+            for (let i = 0; i <= userIssues.length - 1; i++) {
+                if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
+                    const accountId =
+                        userIssues[i].histories.length && userIssues[i].histories[0].from;
+                    userIssues[i].histories[0].avatars = await getUserByAccountId(
+                        userAccountId,
+                        accountId,
+                        httpClient
+                    );
+                }
+            }
+        } catch (err) {
+            console.log(err, "Error is here");
+        }
 
-        // userIssues = _.sortBy(userIssues, i => {
-        //     return i.fields.updated;
-        // });
+        userIssues = _.sortBy(userIssues, i => {
+            return i.fields.updated;
+        });
 
         userIssues = _.reverse(userIssues);
 
