@@ -1,20 +1,19 @@
 document.onreadystatechange = function() {
     if (document.readyState == "interactive") {
         let jwt_token = $('meta[name="token"]').attr("content");
-		let projectKeys = [];
-		let repoNames = [];
+        let projectKeys = [];
+        let repoNames = [];
 
         function addEventListeners() {
-			let jiraProjects = document.getElementsByClassName("project-link");
-			let githubRepos = document.getElementsByClassName("repositories-link");
-            let loader = document.getElementsByClassName("loader")[0];
-
-			// asd--
+            let jiraProjects = document.getElementsByClassName("project-link");
+            let githubRepos = document.getElementsByClassName("repositories-link");
+            let jiraLoader = document.getElementsByClassName("jira-loader")[0];
+            let gitHubLoader = document.getElementsByClassName("github-loader")[0];
 
             for (let i = 0; i <= jiraProjects.length - 1; i++) {
                 const current = jiraProjects[i];
                 current.addEventListener("change", function(e) {
-                    loader.classList.remove("hide-loader");
+                    jiraLoader.classList.remove("hide-loader");
                     if (
                         e.target.checked &&
                         projectKeys.findIndex(key => key == e.target.name) === -1
@@ -27,12 +26,12 @@ document.onreadystatechange = function() {
                         sendSelectedProjects(projectKeys.toString());
                     }
                 });
-			}
+            }
 
-			for (let i = 0; i <= githubRepos.length - 1; i++) {
+            for (let i = 0; i <= githubRepos.length - 1; i++) {
                 const current = githubRepos[i];
                 current.addEventListener("change", function(e) {
-                    loader.classList.remove("hide-loader");
+                    gitHubLoader.classList.remove("hide-loader");
                     if (
                         e.target.checked &&
                         repoNames.findIndex(key => key == e.target.name) === -1
@@ -46,6 +45,11 @@ document.onreadystatechange = function() {
                     }
                 });
             }
+
+            let displayBtn = document.getElementById("maximize-display");
+            displayBtn.addEventListener("click", function() {
+                $("#navigation-app").css("display", "none");
+            });
         }
 
         function sendSelectedProjects(projectkey) {
@@ -57,7 +61,7 @@ document.onreadystatechange = function() {
                     if (XHR.readyState == 4) {
                         if (XHR.status == 200) {
                             $("body").html(XHR.responseText);
-                            loader.classList.add("hide-loader");
+                            jiraLoader.classList.add("hide-loader");
                             addEventListeners();
                             projectKeys = [];
                         } else {
@@ -70,8 +74,9 @@ document.onreadystatechange = function() {
                 XHR.setRequestHeader("Authorization", `JWT ${jwt_token}`);
                 XHR.send();
             }
-		}
-		function sendSelectedRepositories(projectkey) {
+        }
+
+        function sendSelectedRepositories(projectkey) {
             if (repoNames.length > 0) {
                 let loader = document.getElementsByClassName("loader")[0];
                 var XHR = new XMLHttpRequest();
@@ -80,7 +85,7 @@ document.onreadystatechange = function() {
                     if (XHR.readyState == 4) {
                         if (XHR.status == 200) {
                             $("body").html(XHR.responseText);
-                            loader.classList.add("hide-loader");
+                            gitHubLoader.classList.add("hide-loader");
                             addEventListeners();
                             repoNames = [];
                         } else {
