@@ -47,9 +47,9 @@
 							<a href="/github-setup" target="_blank">Click to Setup GitHub</a>
 							{{/if}}
 
-							<button class="aui-button" id="maximize-display">
+							{{!-- <button class="aui-button" id="maximize-display">
 								<span class="aui-icon icon-maximize-d"></span>
-							</button>
+							</button> --}}
 						</div>
 					</div>
 					<div class="wrapping-container">
@@ -120,9 +120,11 @@
 									<span class="aui-icon aui-icon-small aui-iconfont-devtools-commit"></span>
 									{{committer.name}}
 								</h5>
-								<h5 class="issue-summary">Message:<span
-										class="aui-icon aui-icon-small aui-iconfont-add-comment"></span>{{message}}</h5>
-								<span>{{DateFormatter date}}</span>
+								<h5 class="issue-summary">Message:
+									<spanclass="aui-icon aui-icon-small aui-iconfont-add-comment"></span>
+										{{message}}
+								</h5>
+								<h6>{{DateFormatter date}}</h6>
 							</div>
 							{{/each}}
 						</div>
