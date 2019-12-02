@@ -3,13 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node -r esm app.js",
+    "start": "client_id='Iv1.4e7569115abdfdb0' client_secret='ebd3bcd3d473ba6947f97cbe79583142a62877ed' session_secret='e_cnpn7&h*2t7&p$n4@_e5)v6v*+)pnnliw@v^11@(gi!onjtj' node -r esm app.js",
     "lint": "eslint app.js routes"
   },
   "dependencies": {
-    "@octokit/app": "^4.1.0",
-    "@octokit/oauth-login-url": "^2.1.2",
-    "@octokit/rest": "^16.35.0",
     "atlassian-connect-express": "^3.5.2",
     "atlassian-jwt": "^1.0.2",
     "axios": "^0.19.0",
