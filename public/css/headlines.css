@@ -213,7 +213,7 @@ span.aui-iconfont-devtools-arrow-left{
 	background: #23282e;
 	color: #DEEBFF;
 	display: flex;
-	justify-content: space-evenly;
+	justify-content: space-between;
 	font-size: 16px;
 	font-weight: normal;
 	text-align: left;
