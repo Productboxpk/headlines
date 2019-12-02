@@ -17,14 +17,26 @@
 								<span class="aui-badge">{{data.length}}</span>
 							</button>
 
-							<a href="#dwarfers" aria-owns="dwarfers" aria-haspopup="true"
+							<a href="#jira-projects" aria-owns="jira-projects" aria-haspopup="true"
 								class="aui-button aui-style-default aui-dropdown2-trigger">
 								Projects
 							</a>
-							<div id="dwarfers" class="aui-style-default aui-dropdown2">
+							<div id="jira-projects" class="aui-style-default aui-dropdown2">
 								<ul class="aui-list-truncate">
 									{{#each projects as |item|}}
 									<li><input type="checkbox" class="project-link" name={{item}}>{{item}}</a></li>
+									{{/each}}
+								</ul>
+							</div>
+
+							<a href="#github-repos" aria-owns="github-repos" aria-haspopup="true"
+								class="aui-button aui-style-default aui-dropdown2-trigger">
+								Repositories
+							</a>
+							<div id="github-repos" class="aui-style-default aui-dropdown2">
+								<ul class="aui-list-truncate">
+									{{#each repoNames as |item|}}
+									<li><input type="checkbox" class="repositories-link" name={{item}}>{{item}}</a></li>
 									{{/each}}
 								</ul>
 							</div>
