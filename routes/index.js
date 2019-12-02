@@ -24,13 +24,13 @@ export default function routes(app, addon) {
         let repoNames = req.query.repoNames;
         let userIssues = [];
         const data = await findByClientKey(Installations, clientKey);
-
+        let accessToken;
         let gitHubData = [];
         let allRepoNames = [];
 
         if (!_.isEmpty(data && data.github_access_token)) {
             let orgsReposData = [];
-            const accessToken = data.github_access_token;
+            accessToken = data.github_access_token;
 
             const { data: orgs } = await getCurrentUserOrganizations(accessToken);
             for (let i = 0; i <= orgs.length - 1; i++) {
@@ -192,7 +192,8 @@ export default function routes(app, addon) {
             data: userIssues,
             projects: allProjectKeys,
             gitHubData: gitHubData,
-            repoNames: allRepoNames
+            repoNames: allRepoNames,
+            showGithubUrl: _.isEmpty(accessToken)
         });
     });
 
