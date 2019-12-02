@@ -29,6 +29,7 @@
 								</ul>
 							</div>
 
+							{{#unless showGithubUrl}}
 							<a href="#github-repos" aria-owns="github-repos" aria-haspopup="true"
 								class="aui-button aui-style-default aui-dropdown2-trigger">
 								Repositories
@@ -40,13 +41,20 @@
 									{{/each}}
 								</ul>
 							</div>
+							{{/unless}}
 
+							{{#if showGithubUrl}}
 							<a href="/github-setup" target="_blank">Click to Setup GitHub</a>
+							{{/if}}
+
+							<button class="aui-button" id="maximize-display">
+								<span class="aui-icon icon-maximize-d"></span>
+							</button>
 						</div>
 					</div>
 					<div class="wrapping-container">
 						<div class="issues-container">
-							<div class="loader hide-loader">
+							<div class="jira-loader loader hide-loader">
 								<svg class="circular" viewBox="25 25 50 50">
 									<circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2"
 										stroke-miterlimit="10" />
@@ -88,26 +96,32 @@
 						</div>
 
 						<div class="branches-container">
+							<div class="github-loader loader hide-loader">
+								<svg class="circular" viewBox="25 25 50 50">
+									<circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2"
+										stroke-miterlimit="10" />
+								</svg>
+							</div>
 							{{#each gitHubData}}
 							<div class="card">
 								<div class="github-title">
-									<span class="aui-icon aui-icon-small aui-iconfont-branch">
-
-									</span>
-									{{branchName}}
-
-									<span class="aui-icon aui-icon-small aui-iconfont-repository-small">
-
-									</span>
-									{{repo.name}}
+									<div>
+										<span class="aui-icon aui-icon-small aui-iconfont-devtools-branch"></span>
+										{{branchName}}
+									</div>
+									<div>
+										<span class="aui-icon aui-icon-small aui-iconfont-devtools-repository"> </span>
+										{{repo.name}}
+									</div>
 								</div>
 
 
-								<h5 class="issue-summary"> Commit by:
-									<span class="aui-icon aui-icon-small aui-iconfont-commits"></span>
+								<h5 class="issue-summary">Commit by:
+									<span class="aui-icon aui-icon-small aui-iconfont-devtools-commit"></span>
 									{{committer.name}}
 								</h5>
-								<h5 class="issue-summary">Message: {{message}}</h5>
+								<h5 class="issue-summary">Message:<span
+										class="aui-icon aui-icon-small aui-iconfont-add-comment"></span>{{message}}</h5>
 								<span>{{DateFormatter date}}</span>
 							</div>
 							{{/each}}
