@@ -23,16 +23,15 @@ export default function routes(app, addon) {
     app.get("/headlines", async (req, res, next) => {
         const { sub: userAccountId, iss: clientKey } = jwt.decode(req.query.jwt, "", true);
         await addAccountIdAndToken(Installations, clientKey, userAccountId, req.query.jwt);
-        const data = await findByClientKey(Installations, clientKey);
+        const clientData = await findByClientKey(Installations, clientKey);
 
-        console.log(data, "data from db");
+        const {access_token:jiraAccessToken} = await token(Installations, clientKey);
+
         console.log("============================================");
-        await token(data)
-
-        
+        console.log(jiraAccessToken, "jiraAccessToken");
 
         process.env.jira_client_key = clientKey;
-        var httpClient = addon.httpClient(req);
+
         let allProjectKeys = [];
         let projectKeys = req.query.projectKey;
         let repoNames = req.query.repoNames;
@@ -42,9 +41,9 @@ export default function routes(app, addon) {
         let gitHubData = [];
         let allRepoNames = [];
 
-        if (!_.isEmpty(data && data.github_access_token)) {
+        if (!_.isEmpty(clientData && clientData.github_access_token)) {
             let orgsReposData = [];
-            accessToken = data.github_access_token;
+            accessToken = clientData.github_access_token;
 
             const { data: orgs } = await getCurrentUserOrganizations(accessToken);
             for (let i = 0; i <= orgs.length - 1; i++) {
@@ -149,7 +148,7 @@ export default function routes(app, addon) {
 
         if (_.isEmpty(allProjectKeys)) {
             try {
-                const data = await getAllProjects(userAccountId, httpClient);
+                const data = await getAllProjects(jiraAccessToken, clientData.data.baseUrl);
                 allProjectKeys = _.map(data, k => k.key);
             } catch (err) {
                 console.log(err, "Error is here");
@@ -160,7 +159,7 @@ export default function routes(app, addon) {
 
         if (projectKeys.length === 1) {
             try {
-                let data = await getAllProjectIssues(userAccountId, projectKeys, httpClient);
+                let data = await getAllProjectIssues(jiraAccessToken, clientData.data.baseUrl, projectKeys);
                 userIssues = [...userIssues, ...data];
             } catch (err) {
                 console.log(err, "Error is here");
@@ -168,7 +167,7 @@ export default function routes(app, addon) {
         } else {
             try {
                 for (let i = 0; i <= projectKeys.length - 1; i++) {
-                    let data = await getAllProjectIssues(userAccountId, projectKeys[i], httpClient);
+                    let data = await getAllProjectIssues(jiraAccessToken, clientData.data.baseUrl, projectKeys[i]);
                     userIssues = [...userIssues, ...data];
                 }
             } catch (err) {
@@ -178,13 +177,8 @@ export default function routes(app, addon) {
         try {
             for (let i = 0; i <= userIssues.length - 1; i++) {
                 if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
-                    const accountId =
-                        userIssues[i].histories.length && userIssues[i].histories[0].from;
-                    userIssues[i].histories[0].avatars = await getUserByAccountId(
-                        userAccountId,
-                        accountId,
-                        httpClient
-                    );
+                    const accountId = userIssues[i].histories.length && userIssues[i].histories[0].from;
+                    userIssues[i].histories[0].avatars = await getUserByAccountId(jiraAccessToken, clientData.data.baseUrl, accountId)           
                 }
             }
         } catch (err) {

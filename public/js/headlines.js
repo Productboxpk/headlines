@@ -1,6 +1,8 @@
 AJS.$(window).load(function() {
     let jwt_token = AJS.$('meta[name="token"]').attr("content");
-    console.log(jwt_token, 'jwtToken')
+    let jiraAccessToken = AJS.$('meta[name="jiraAccessToken"]').attr("content");
+    
+    console.log(jiraAccessToken, 'jiraAccessToken')
     let projectKeys = [];
     let repoNames = [];
 
