@@ -1,5 +1,6 @@
 AJS.$(window).load(function() {
     let jwt_token = AJS.$('meta[name="token"]').attr("content");
+    console.log(jwt_token, 'jwtToken')
     let projectKeys = [];
     let repoNames = [];
 
