@@ -1,5 +1,5 @@
 AJS.$(window).load(function() {
-    let jwt_token = AJS.$('meta[name="token"]').attr("content");
+    // let jwt_token = AJS.$('meta[name="token"]').attr("content");
     let jiraAccessToken = AJS.$('meta[name="jiraAccessToken"]').attr("content");
     
     console.log(jiraAccessToken, 'jiraAccessToken')
@@ -63,7 +63,7 @@ AJS.$(window).load(function() {
             };
 
             XHR.open("GET", `headlines?projectKey=${projectkey}&repoNames=${repoName}`);
-            XHR.setRequestHeader("Authorization", `JWT ${jwt_token}`);
+            XHR.setRequestHeader("Authorization", `Bearer ${jiraAccessToken}`);
             XHR.send();
         }
     }
@@ -88,7 +88,7 @@ AJS.$(window).load(function() {
             };
 
             XHR.open("GET", `headlines?repoNames=${repoName}&projectKey=${projectkey}`);
-            XHR.setRequestHeader("Authorization", `JWT ${jwt_token}`);
+            XHR.setRequestHeader("Authorization", `Bearer ${jiraAccessToken}`);
             XHR.send();
         }
     }

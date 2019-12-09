@@ -4,8 +4,7 @@ import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "
 import { Installations } from "../db";
 import {
     findAndUpdateElseInsert,
-    findByClientKey,
-    addAccountIdAndToken
+    findByClientKey
 } from "../lib/models/installation";
 import * as jwt from "atlassian-jwt";
 import { token } from "../lib/jira";
@@ -13,6 +12,7 @@ import { token } from "../lib/jira";
 export default function routes(app, addon) {
     app.post("/installed", async (req, res, next) => {
         await findAndUpdateElseInsert(Installations, req.body);
+        req.session.clientKey = req.body.clientKey;
         return res.sendStatus(200);
     });
 
@@ -21,16 +21,16 @@ export default function routes(app, addon) {
     });
 
     app.get("/headlines", async (req, res, next) => {
-        const { sub: userAccountId, iss: clientKey } = jwt.decode(req.query.jwt, "", true);
-        await addAccountIdAndToken(Installations, clientKey, userAccountId, req.query.jwt);
-        const clientData = await findByClientKey(Installations, clientKey);
-
-        const {access_token:jiraAccessToken} = await token(Installations, clientKey);
+        
+        const jiraAccessToken = token(req, res, next);
+        console.log(req.session, 'sessioms')
 
         console.log("============================================");
+        // const jiraAccessToken = req.session.clientData.jira_token.access_token
+        
         console.log(jiraAccessToken, "jiraAccessToken");
 
-        process.env.jira_client_key = clientKey;
+        process.env.jira_client_key = req.session.clientData.clientKey;
 
         let allProjectKeys = [];
         let projectKeys = req.query.projectKey;
@@ -41,9 +41,9 @@ export default function routes(app, addon) {
         let gitHubData = [];
         let allRepoNames = [];
 
-        if (!_.isEmpty(clientData && clientData.github_access_token)) {
+        if (!_.isEmpty(req.session.clientData && req.session.clientData.github_access_token)) {
             let orgsReposData = [];
-            accessToken = clientData.github_access_token;
+            accessToken = req.session.clientData.github_access_token;
 
             const { data: orgs } = await getCurrentUserOrganizations(accessToken);
             for (let i = 0; i <= orgs.length - 1; i++) {
@@ -148,7 +148,7 @@ export default function routes(app, addon) {
 
         if (_.isEmpty(allProjectKeys)) {
             try {
-                const data = await getAllProjects(jiraAccessToken, clientData.data.baseUrl);
+                const data = await getAllProjects(jiraAccessToken, req.session.clientData.data.baseUrl);
                 allProjectKeys = _.map(data, k => k.key);
             } catch (err) {
                 console.log(err, "Error is here");
@@ -159,7 +159,11 @@ export default function routes(app, addon) {
 
         if (projectKeys.length === 1) {
             try {
-                let data = await getAllProjectIssues(jiraAccessToken, clientData.data.baseUrl, projectKeys);
+                let data = await getAllProjectIssues(
+                    jiraAccessToken,
+                    req.session.clientData.data.baseUrl,
+                    projectKeys
+                );
                 userIssues = [...userIssues, ...data];
             } catch (err) {
                 console.log(err, "Error is here");
@@ -167,7 +171,11 @@ export default function routes(app, addon) {
         } else {
             try {
                 for (let i = 0; i <= projectKeys.length - 1; i++) {
-                    let data = await getAllProjectIssues(jiraAccessToken, clientData.data.baseUrl, projectKeys[i]);
+                    let data = await getAllProjectIssues(
+                        jiraAccessToken,
+                        req.session.clientData.data.baseUrl,
+                        projectKeys[i]
+                    );
                     userIssues = [...userIssues, ...data];
                 }
             } catch (err) {
@@ -177,8 +185,13 @@ export default function routes(app, addon) {
         try {
             for (let i = 0; i <= userIssues.length - 1; i++) {
                 if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
-                    const accountId = userIssues[i].histories.length && userIssues[i].histories[0].from;
-                    userIssues[i].histories[0].avatars = await getUserByAccountId(jiraAccessToken, clientData.data.baseUrl, accountId)           
+                    const accountId =
+                        userIssues[i].histories.length && userIssues[i].histories[0].from;
+                    userIssues[i].histories[0].avatars = await getUserByAccountId(
+                        jiraAccessToken,
+                        req.session.clientData.data.baseUrl,
+                        accountId
+                    );
                 }
             }
         } catch (err) {
@@ -201,7 +214,8 @@ export default function routes(app, addon) {
             projects: allProjectKeys,
             gitHubData: gitHubData,
             repoNames: allRepoNames,
-            showGithubUrl: _.isEmpty(accessToken)
+            showGithubUrl: _.isEmpty(accessToken),
+            jiraAccessToken: jiraAccessToken
         });
     });
 
