@@ -2,8 +2,7 @@ import * as _ from "lodash";
 import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../lib/api/jira";
 import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "../lib/api/github";
 import { Installations } from "../db";
-import { findAndUpdateElseInsert, findByClientKey } from "../lib/models/installation";
-import * as jwt from "atlassian-jwt";
+import { findAndUpdateElseInsert } from "../lib/models/installation";
 import { token } from "../lib/jira";
 
 export default function routes(app, addon) {
@@ -18,7 +17,7 @@ export default function routes(app, addon) {
     });
 
     app.get("/headlines", async (req, res, next) => {
-        const jiraAccessToken = await token(req, res, next);
+        const { access_token: jiraAccessToken } = await token(req, res, next);
 
         console.log("============================================");
         // const jiraAccessToken = req.session.clientData.jira_token.access_token
@@ -37,10 +36,9 @@ export default function routes(app, addon) {
         let allRepoNames = [];
 
         if (!_.isEmpty(req.session.clientData && req.session.clientData.github_access_token)) {
-            
             let orgsReposData = [];
             accessToken = req.session.clientData.github_access_token;
-            console.log(accessToken, 'AccessToken')
+            console.log(accessToken, "AccessToken");
 
             const { data: orgs } = await getCurrentUserOrganizations(accessToken);
             for (let i = 0; i <= orgs.length - 1; i++) {
@@ -68,8 +66,6 @@ export default function routes(app, addon) {
                     _.map(commitsData, commits => {
                         _.mapValues(commits, (value, key) => {
                             commitsData = _.map(value, v => {
-                                console.log(orgsReposData[i], 'org repo data')
-                                console.log(v, 'v data')
                                 return {
                                     repo: {
                                         name: orgsReposData[i].name,
@@ -82,7 +78,9 @@ export default function routes(app, addon) {
                                     message: v.commit.message,
                                     committer: {
                                         avatarUrl: v.committer && v.committer.avatar_url,
-                                        name: v.committer && v.committer.login,
+                                        name:
+                                            (v.committer && v.committer.login) ||
+                                            v.commit.committer.name,
                                         id: v.committer && v.committer.id,
                                         type: v.committer && v.committer.type
                                     },
@@ -211,7 +209,7 @@ export default function routes(app, addon) {
         gitHubData = _.reverse(gitHubData);
 
         res.render("headlines", {
-            title: "Issues",
+            title: "Headlines",
             data: userIssues,
             projects: allProjectKeys,
             gitHubData: gitHubData,
@@ -222,6 +220,7 @@ export default function routes(app, addon) {
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
+        console.log(req.query.code, "request Token");
         const requestToken = req.query.code;
 
         const accessToken = await authorizeApp(requestToken);
