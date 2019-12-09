@@ -23,7 +23,7 @@ export default function routes(app, addon) {
     app.get("/headlines", async (req, res, next) => {
         
         const jiraAccessToken = await token(req, res, next);
-        console.log(req.session, 'sessioms')
+        console.log(req.session, 'sessioss')
 
         console.log("============================================");
         // const jiraAccessToken = req.session.clientData.jira_token.access_token
