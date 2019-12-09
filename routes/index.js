@@ -2,10 +2,7 @@ import * as _ from "lodash";
 import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../lib/api/jira";
 import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "../lib/api/github";
 import { Installations } from "../db";
-import {
-    findAndUpdateElseInsert,
-    findByClientKey
-} from "../lib/models/installation";
+import { findAndUpdateElseInsert, findByClientKey } from "../lib/models/installation";
 import * as jwt from "atlassian-jwt";
 import { token } from "../lib/jira";
 
@@ -21,13 +18,11 @@ export default function routes(app, addon) {
     });
 
     app.get("/headlines", async (req, res, next) => {
-        
         const jiraAccessToken = await token(req, res, next);
-        console.log(req.session, 'sessioms')
 
         console.log("============================================");
         // const jiraAccessToken = req.session.clientData.jira_token.access_token
-        
+
         console.log(jiraAccessToken, "jiraAccessToken");
 
         process.env.jira_client_key = req.session.clientData.clientKey;
@@ -42,8 +37,10 @@ export default function routes(app, addon) {
         let allRepoNames = [];
 
         if (!_.isEmpty(req.session.clientData && req.session.clientData.github_access_token)) {
+            
             let orgsReposData = [];
             accessToken = req.session.clientData.github_access_token;
+            console.log(accessToken, 'AccessToken')
 
             const { data: orgs } = await getCurrentUserOrganizations(accessToken);
             for (let i = 0; i <= orgs.length - 1; i++) {
@@ -71,6 +68,8 @@ export default function routes(app, addon) {
                     _.map(commitsData, commits => {
                         _.mapValues(commits, (value, key) => {
                             commitsData = _.map(value, v => {
+                                console.log(orgsReposData[i], 'org repo data')
+                                console.log(v, 'v data')
                                 return {
                                     repo: {
                                         name: orgsReposData[i].name,
@@ -82,10 +81,10 @@ export default function routes(app, addon) {
                                     branchName: key,
                                     message: v.commit.message,
                                     committer: {
-                                        avatarUrl: v.committer.avatar_url,
-                                        name: v.committer.login,
-                                        id: v.committer.id,
-                                        type: v.committer.type
+                                        avatarUrl: v.committer && v.committer.avatar_url,
+                                        name: v.committer && v.committer.login,
+                                        id: v.committer && v.committer.id,
+                                        type: v.committer && v.committer.type
                                     },
                                     date: v.commit.committer.date
                                 };
@@ -148,7 +147,10 @@ export default function routes(app, addon) {
 
         if (_.isEmpty(allProjectKeys)) {
             try {
-                const data = await getAllProjects(jiraAccessToken, req.session.clientData.data.baseUrl);
+                const data = await getAllProjects(
+                    jiraAccessToken,
+                    req.session.clientData.data.baseUrl
+                );
                 allProjectKeys = _.map(data, k => k.key);
             } catch (err) {
                 console.log(err, "Error is here");
