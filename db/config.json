@@ -15,7 +15,7 @@
     },
     "production": {
         "dialect": "postgres",
-        "use_env_variable": "postgres://ibflqvnzzgbzry:7c140deaaaed243cd1f92f8c27745dfdbf97ff425929c022441b1da51dc0074f@ec2-174-129-253-180.compute-1.amazonaws.com:5432/de2p26k6ira5d8",
+        "use_env_variable": "DATABASE_URL",
         "disable_sql_logging": true,
         "operatorsAliases": false,
         "ssl": true,

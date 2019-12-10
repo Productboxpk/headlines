@@ -4,6 +4,12 @@
     // "development" is the default environment.
     // To change, set NODE_ENV (http://expressjs.com/api.html#app.configure).
     "development": {
+        "database": "jira",
+        "username": "careaxiom",
+        "password": "1234",
+        "host": "127.0.0.1",
+        "dialect": "postgres",
+        "operatorsAliases": false,
         // Port the Express server will listen on.
         "port": 3000,
         // Use views/unauthorized.hbs for error page.
@@ -53,6 +59,14 @@
     // Configuration for production, which is enabled by setting
     // the NODE_ENV=production environment variable.
     "production": {
+        "dialect": "postgres",
+        "use_env_variable": "$DATABASE_URL",
+        "disable_sql_logging": false,
+        "operatorsAliases": false,
+        "ssl": true,
+        "dialectOptions": {
+            "ssl": true
+        },
         // PaaS like Heroku will provide HTTP port via environement variable.
         "port": "$PORT",
         // Use views/unauthorized.hbs for error page.
