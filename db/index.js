@@ -3,7 +3,13 @@ import { InstallationsModel } from "../lib/models/installation";
 import express from "express";
 const app = express();
 const env = app.get("env");
-let config = require("../config.json")[env];
+
+console.log(env, "env");
+
+let config = require("../config.json");
+console.log(config, "config");
+
+
 
 let sequelize;
 
