@@ -4,12 +4,6 @@
     // "development" is the default environment.
     // To change, set NODE_ENV (http://expressjs.com/api.html#app.configure).
     "development": {
-        "database": "jira",
-        "username": "careaxiom",
-        "password": "1234",
-        "host": "127.0.0.1",
-        "dialect": "postgres",
-        "operatorsAliases": false,
         // Port the Express server will listen on.
         "port": 3000,
         // Use views/unauthorized.hbs for error page.
@@ -41,6 +35,10 @@
         // To configure PostgreSQL, the following can be used:
         //
         "store": {
+            "database": "jira",
+            "username": "careaxiom",
+            "password": "1234",
+            "operatorsAliases": false,
             "adapter": "sequelize",
             "dialect": "postgres",
             "url": "postgres://localhost/jira"
@@ -59,14 +57,6 @@
     // Configuration for production, which is enabled by setting
     // the NODE_ENV=production environment variable.
     "production": {
-        "dialect": "postgres",
-        "use_env_variable": "$DATABASE_URL",
-        "disable_sql_logging": false,
-        "operatorsAliases": false,
-        "ssl": true,
-        "dialectOptions": {
-            "ssl": true
-        },
         // PaaS like Heroku will provide HTTP port via environement variable.
         "port": "$PORT",
         // Use views/unauthorized.hbs for error page.
@@ -74,12 +64,14 @@
         // Public URL to production app.
         "localBaseUrl": "https://jira-headlines-plugin.herokuapp.com",
         "store": {
-            // Don't use memory storage for production, otherwise
-            // data in the storage will go away when the app server restarts.
-            // Here, we use PostgreSQL:
-            "type": "postgres",
-            // PaaS like Heroku will provide DB connection URL through environment variable.
-            "url": "$DATABASE_URL"
+            "dialect": "postgres",
+            "use_env_variable": "$DATABASE_URL",
+            "disable_sql_logging": false,
+            "operatorsAliases": false,
+            "ssl": true,
+            "dialectOptions": {
+                "ssl": true
+            }
         },
         // The app can only be registered by the products on these domains:
         "whitelist": [
