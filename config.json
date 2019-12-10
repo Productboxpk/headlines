@@ -35,10 +35,6 @@
         // To configure PostgreSQL, the following can be used:
         //
         "store": {
-            "database": "jira",
-            "username": "careaxiom",
-            "password": "1234",
-            "operatorsAliases": false,
             "adapter": "sequelize",
             "dialect": "postgres",
             "url": "postgres://localhost/jira"
@@ -64,14 +60,12 @@
         // Public URL to production app.
         "localBaseUrl": "https://jira-headlines-plugin.herokuapp.com",
         "store": {
-            "dialect": "postgres",
-            "use_env_variable": "$DATABASE_URL",
-            "disable_sql_logging": false,
-            "operatorsAliases": false,
-            "ssl": true,
-            "dialectOptions": {
-                "ssl": true
-            }
+            // Don't use memory storage for production, otherwise
+            // data in the storage will go away when the app server restarts.
+            // Here, we use PostgreSQL:
+            "type": "postgres",
+            // PaaS like Heroku will provide DB connection URL through environment variable.
+            "url": "$DATABASE_URL"
         },
         // The app can only be registered by the products on these domains:
         "whitelist": [

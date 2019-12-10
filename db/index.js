@@ -7,8 +7,8 @@ let config = require("../config.json")[env];
 
 let sequelize;
 
-if (config.store.use_env_variable) {
-    sequelize = new Sequelize(process.env[config.store.use_env_variable]);
+if (config.store.url) {
+    sequelize = new Sequelize(config.store.url);
 } else {
     sequelize = new Sequelize(config.store.database, config.store.username, config.store.password, {
         host: config.store.host,
