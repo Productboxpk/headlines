@@ -2,8 +2,6 @@ import Sequelize from "sequelize";
 import { InstallationsModel } from "../lib/models/installation";
 import express from "express";
 const app = express();
-const env = app.get("env");
-const config = require("../config.json")[env];
 console.log(process.env.DATABASE_URL, "config");
 
 let sequelize;
@@ -11,6 +9,9 @@ let sequelize;
 if (process.env.DATABASE_URL) {
     sequelize = new Sequelize(process.env.DATABASE_URL);
 } else {
+    const env = app.get("env");
+    const config = require("../config.json")[env];
+
     sequelize = new Sequelize(config.store.database, config.store.username, config.store.password, {
         host: config.store.host,
         dialect: config.store.dialect,
