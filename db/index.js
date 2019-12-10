@@ -4,10 +4,10 @@ import express from "express";
 const app = express();
 const env = app.get("env");
 
-console.log(env, "env");
+console.log(process.env, "env");
 
 let config = require("../config.json");
-console.log(config, "config");
+console.log(process.env.store.url, "config");
 
 
 
