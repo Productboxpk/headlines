@@ -7,8 +7,8 @@ import { token } from "../lib/jira";
 
 export default function routes(app, addon) {
     app.post("/installed", async (req, res, next) => {
-        await findAndUpdateElseInsert(Installations, req.body);
         req.session.clientKey = req.body.clientKey;
+        await findAndUpdateElseInsert(Installations, req.body);
         return res.sendStatus(200);
     });
 
@@ -18,11 +18,6 @@ export default function routes(app, addon) {
 
     app.get("/headlines", async (req, res, next) => {
         const { access_token: jiraAccessToken } = await token(req, res, next);
-
-        console.log("============================================");
-        // const jiraAccessToken = req.session.clientData.jira_token.access_token
-
-        console.log(jiraAccessToken, "jiraAccessToken");
 
         process.env.jira_client_key = req.session.clientData.clientKey;
 
@@ -38,7 +33,6 @@ export default function routes(app, addon) {
         if (!_.isEmpty(req.session.clientData && req.session.clientData.github_access_token)) {
             let orgsReposData = [];
             accessToken = req.session.clientData.github_access_token;
-            console.log(accessToken, "AccessToken");
 
             const { data: orgs } = await getCurrentUserOrganizations(accessToken);
             for (let i = 0; i <= orgs.length - 1; i++) {
@@ -220,6 +214,7 @@ export default function routes(app, addon) {
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
+        console.log(req.query, "request");
         console.log(req.query.code, "request Token");
         const requestToken = req.query.code;
 
