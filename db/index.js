@@ -3,18 +3,13 @@ import { InstallationsModel } from "../lib/models/installation";
 import express from "express";
 const app = express();
 const env = app.get("env");
-
-console.log(process.env, "env");
-
-let config = require("../config.json");
-console.log(process.env.store.url, "config");
-
-
+const config = require("../config.json")[env];
+console.log(process.env.DATABASE_URL, "config");
 
 let sequelize;
 
-if (config.store.url) {
-    sequelize = new Sequelize(config.store.url);
+if (process.env.DATABASE_URL) {
+    sequelize = new Sequelize(process.env.DATABASE_URL);
 } else {
     sequelize = new Sequelize(config.store.database, config.store.username, config.store.password, {
         host: config.store.host,
