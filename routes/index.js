@@ -216,19 +216,16 @@ export default function routes(app, addon) {
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
         const requestToken = req.query.code;
-        console.log(requestToken, 'request Token ***********');
         const accessToken = await authorizeApp(requestToken);
-        console.log(accessToken);
         // testing token
         const { status } = await getCurrentUser(accessToken);
         if (status === 200) {
             const client = await Installations.findByPk(CLIENT_KEY)
             const updatedClient = await client.update({github_access_token: accessToken}, {where: {client_key: CLIENT_KEY}});
-            console.log(updatedClient);
-            console.log(client, 'client')
+            console.log('****************',updatedClient,'****************');
             if(updatedClient) {
                 res.redirect(
-                    `${client.jira_host}/plugins/servlet/ac/jira-git-headlines/headlines`
+                    `${updatedClient.data.baseUrl}/plugins/servlet/ac/jira-git-headlines/headlines`
                 );
             }
         }
