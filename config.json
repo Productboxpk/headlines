@@ -1,0 +1,30 @@
+{
+    "development": {
+        "port": 3000,
+        "errorTemplate": true,
+        "store": {
+            "database": "jira",
+            "username": "",
+            "password": "",
+            "adapter": "sequelize",
+            "dialect": "postgres",
+            "url": "postgres://localhost/jira"
+        }
+    },
+    "production": {
+        "port": "$PORT",
+        "errorTemplate": true,
+        "localBaseUrl": "https://jira-headlines-plugin.herokuapp.com",
+        "store": {
+            "type": "postgres",
+            "url": "$DATABASE_URL"
+        },
+        "whitelist": [
+            "*.jira-dev.com",
+            "*.atlassian.net",
+            "*.atlassian.com",
+            "*.jira.com"
+        ]
+    },
+    "product": "jira"
+}
