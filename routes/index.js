@@ -222,7 +222,6 @@ export default function routes(app, addon) {
         if (status === 200) {
             const client = await Installations.findByPk(CLIENT_KEY)
             const updatedClient = await client.update({github_access_token: accessToken}, {where: {client_key: CLIENT_KEY}});
-            console.log('****************',updatedClient,'****************');
             if(updatedClient) {
                 res.redirect(
                     `${updatedClient.data.baseUrl}/plugins/servlet/ac/jira-git-headlines/headlines`
