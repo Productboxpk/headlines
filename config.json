@@ -35,6 +35,9 @@
         // To configure PostgreSQL, the following can be used:
         //
         "store": {
+            "database": "jira",
+            "username": "", //add username here
+            "password": "", // add password here
             "adapter": "sequelize",
             "dialect": "postgres",
             "url": "postgres://localhost/jira"
