@@ -221,21 +221,16 @@ export default function routes(app, addon) {
         console.log(accessToken);
         // testing token
         const { status } = await getCurrentUser(accessToken);
-        if (status > 200 && status < 299) {
-            await Installations.findByPk(CLIENT_KEY)
-                .then(client => {
-                    client
-                        .update({
-                            github_access_token: accessToken
-                        })
-                        .then(data => {
-                            res.redirect(
-                                `${data.jira_host}/plugins/servlet/ac/jira-git-headlines/headlines`
-                            );
-                        })
-                        .catch(err => console.log("Update err", err));
-                })
-                .catch(err => console.log("Find err", err));
+        if (status === 200) {
+            const client = await Installations.findByPk(CLIENT_KEY)
+            const updatedClient = await client.update({github_access_token: accessToken}, {where: {client_key: CLIENT_KEY}});
+            console.log(updatedClient);
+            console.log(client, 'client')
+            if(updatedClient) {
+                res.redirect(
+                    `${client.jira_host}/plugins/servlet/ac/jira-git-headlines/headlines`
+                );
+            }
         }
     });
 
