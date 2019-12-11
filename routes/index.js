@@ -137,7 +137,7 @@ export default function routes(app, addon) {
         }
 
         projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
-
+        console.log(clientData, 'client Data  ************')
         if (_.isEmpty(allProjectKeys)) {
             try {
                 const data = await getAllProjects(
