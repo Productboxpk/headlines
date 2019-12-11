@@ -4,10 +4,11 @@ import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "
 import { Installations } from "../db";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
 import { token } from "../lib/jira";
-
+import * as jwt from "atlassian-jwt";
+let CLIENT_KEY = null;
 export default function routes(app, addon) {
     app.post("/installed", async (req, res, next) => {
-        req.session.clientKey = req.body.clientKey;
+        CLIENT_KEY = req.body.clientKey;
         await findAndUpdateElseInsert(Installations, req.body);
         return res.sendStatus(200);
     });
@@ -17,10 +18,8 @@ export default function routes(app, addon) {
     });
 
     app.get("/headlines", async (req, res, next) => {
-        const { access_token: jiraAccessToken } = await token(req, res, next);
-
-        process.env.jira_client_key = req.session.clientData.clientKey;
-
+        const { sub } = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true);
+        const {  accessToken: jiraAccessToken, updatedClient: clientData } = await token(CLIENT_KEY, sub);
         let allProjectKeys = [];
         let projectKeys = req.query.projectKey;
         let repoNames = req.query.repoNames;
@@ -30,9 +29,9 @@ export default function routes(app, addon) {
         let gitHubData = [];
         let allRepoNames = [];
 
-        if (!_.isEmpty(req.session.clientData && req.session.clientData.github_access_token)) {
+        if (!_.isEmpty(clientData && clientData.github_access_token)) {
             let orgsReposData = [];
-            accessToken = req.session.clientData.github_access_token;
+            accessToken = clientData.github_access_token;
 
             const { data: orgs } = await getCurrentUserOrganizations(accessToken);
             for (let i = 0; i <= orgs.length - 1; i++) {
@@ -141,7 +140,7 @@ export default function routes(app, addon) {
             try {
                 const data = await getAllProjects(
                     jiraAccessToken,
-                    req.session.clientData.data.baseUrl
+                    clientData.data.baseUrl
                 );
                 allProjectKeys = _.map(data, k => k.key);
             } catch (err) {
@@ -155,7 +154,7 @@ export default function routes(app, addon) {
             try {
                 let data = await getAllProjectIssues(
                     jiraAccessToken,
-                    req.session.clientData.data.baseUrl,
+                    clientData.data.baseUrl,
                     projectKeys
                 );
                 userIssues = [...userIssues, ...data];
@@ -167,7 +166,7 @@ export default function routes(app, addon) {
                 for (let i = 0; i <= projectKeys.length - 1; i++) {
                     let data = await getAllProjectIssues(
                         jiraAccessToken,
-                        req.session.clientData.data.baseUrl,
+                        clientData.data.baseUrl,
                         projectKeys[i]
                     );
                     userIssues = [...userIssues, ...data];
@@ -183,7 +182,7 @@ export default function routes(app, addon) {
                         userIssues[i].histories.length && userIssues[i].histories[0].from;
                     userIssues[i].histories[0].avatars = await getUserByAccountId(
                         jiraAccessToken,
-                        req.session.clientData.data.baseUrl,
+                        clientData.data.baseUrl,
                         accountId
                     );
                 }
@@ -214,17 +213,15 @@ export default function routes(app, addon) {
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
-        console.log(req.query, "request");
-        console.log(req.query.code, "request Token");
+        console.log(CLIENT_KEY,'client key');
+        console.log(req.query.code);
         const requestToken = req.query.code;
-
         const accessToken = await authorizeApp(requestToken);
 
         // testing token
         const { status } = await getCurrentUser(accessToken);
-
         if (status == 200) {
-            await Installations.findByPk(process.env.jira_client_key)
+            await Installations.findByPk(CLIENT_KEY)
                 .then(client => {
                     client
                         .update({
@@ -242,7 +239,7 @@ export default function routes(app, addon) {
     });
 
     app.post("/github/events", (req, res, next) => {
-        console.log(req, "Webhook url");
+        // console.log(req, "Webhook url");
     });
 
     app.get("/github-setup", (req, res, next) => {
