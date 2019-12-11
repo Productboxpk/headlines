@@ -216,8 +216,9 @@ export default function routes(app, addon) {
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
         const requestToken = req.query.code;
+        console.log(requestToken, 'request Token ***********');
         const accessToken = await authorizeApp(requestToken);
-
+        console.log(accessToken);
         // testing token
         const { status } = await getCurrentUser(accessToken);
         if (status > 200 && status < 299) {
