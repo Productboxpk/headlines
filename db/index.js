@@ -2,7 +2,6 @@ import Sequelize from "sequelize";
 import { InstallationsModel } from "../lib/models/installation";
 import express from "express";
 const app = express();
-console.log(process.env.DATABASE_URL, "config");
 
 let sequelize;
 
