@@ -5,7 +5,9 @@ import { Installations } from "../db";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
 import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
+
 let CLIENT_KEY = null;
+
 export default function routes(app, addon) {
     app.post("/installed", async (req, res, next) => {
         CLIENT_KEY = req.body.clientKey;
@@ -19,7 +21,7 @@ export default function routes(app, addon) {
 
     app.get("/headlines", async (req, res, next) => {
         const { sub } = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true);
-        const {  accessToken: jiraAccessToken, updatedClient: clientData } = await token(CLIENT_KEY, sub);
+        const { accessToken: jiraAccessToken, updatedClient: clientData } = await token(CLIENT_KEY, sub);
         let allProjectKeys = [];
         let projectKeys = req.query.projectKey;
         let repoNames = req.query.repoNames;
@@ -213,14 +215,12 @@ export default function routes(app, addon) {
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
-        console.log(CLIENT_KEY,'client key');
-        console.log(req.query.code);
         const requestToken = req.query.code;
         const accessToken = await authorizeApp(requestToken);
 
         // testing token
         const { status } = await getCurrentUser(accessToken);
-        if (status == 200) {
+        if (status > 200 && status < 299) {
             await Installations.findByPk(CLIENT_KEY)
                 .then(client => {
                     client
