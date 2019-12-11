@@ -214,8 +214,6 @@ export default function routes(app, addon) {
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
-        console.log(req.query, "request");
-        console.log(req.query.code, "request Token");
         const requestToken = req.query.code;
 
         const accessToken = await authorizeApp(requestToken);
