@@ -4,4 +4,4 @@
 node_modules
 *.pem
 credentials.json
-db/config.json
+config.json
