@@ -29,115 +29,164 @@ export default function routes(app, addon) {
 
         let accessToken;
         let gitHubData = [];
-        let allRepoNames = [];
+        const allRepoNames = [];
 
         if (!_.isEmpty(clientData && clientData.github_access_token)) {
-            let orgsReposData = [];
             accessToken = clientData.github_access_token;
-
+            const commitsDataPromises = []
+            let branchesData = [];
+            let commitsData = [];
             const { data: orgs } = await getCurrentUserOrganizations(accessToken);
-            for (let i = 0; i <= orgs.length - 1; i++) {
-                const { data } = await get(accessToken, orgs[i].repos_url);
-                orgsReposData = [...orgsReposData, ...data];
-            }
-            if (_.isEmpty(repoNames)) {
-                for (let i = 0; i <= orgsReposData.length - 1; i++) {
-                    const branchLink = orgsReposData[i].branches_url.slice(0, -9);
-                    let commitLink = orgsReposData[i].commits_url.slice(0, -6);
-                    allRepoNames.push(orgsReposData[i].name);
-
-                    let { data: branchesData } = await get(accessToken, branchLink);
-
-                    let commitsData = [];
-
-                    for (let j = 0; j <= branchesData.length - 1; j++) {
-                        let { data: commits } = await get(
-                            accessToken,
-                            commitLink + "?sha=" + branchesData[j].commit.sha
-                        );
-                        commits = { [branchesData[j].name]: commits };
-                        commitsData = [...commitsData, commits];
-                    }
-                    _.map(commitsData, commits => {
-                        _.mapValues(commits, (value, key) => {
-                            commitsData = _.map(value, v => {
-                                return {
-                                    repo: {
-                                        name: orgsReposData[i].name,
-                                        owner: {
-                                            name: orgsReposData[i].owner.login,
-                                            avatarUrl: orgsReposData[i].owner.avatar_url
-                                        }
-                                    },
-                                    branchName: key,
-                                    message: v.commit.message,
-                                    committer: {
-                                        avatarUrl: v.committer && v.committer.avatar_url,
-                                        name:
-                                            (v.committer && v.committer.login) ||
-                                            v.commit.committer.name,
-                                        id: v.committer && v.committer.id,
-                                        type: v.committer && v.committer.type
-                                    },
-                                    date: v.commit.committer.date
-                                };
-                            });
-                            gitHubData = [...gitHubData, ...commitsData];
-                        });
-                    });
+            const orgsReposDataPromises = _.map(orgs, (org) => { return get(accessToken, org.repos_url) });
+            let orgsData = await Promise.all(orgsReposDataPromises);
+            orgsData = _.first(orgsData).data;
+            const branchsLink = [];
+            const commitsLink = [];
+            _.each(orgsData, (orgData) => {
+                allRepoNames.push(orgData.name);
+                if (_.isEmpty(repoNames)) {
+                    branchsLink.push(orgData.branches_url.slice(0, -9));
+                    commitsLink.push(orgData.commits_url.slice(0, -6));
                 }
-                repoNames = allRepoNames;
-            } else {
-                for (let i = 0; i <= orgsReposData.length - 1; i++) {
-                    allRepoNames.push(orgsReposData[i].name);
-                    if (_.includes(repoNames, orgsReposData[i].name)) {
-                        const branchLink = orgsReposData[i].branches_url.slice(0, -9);
-                        let commitLink = orgsReposData[i].commits_url.slice(0, -6);
-
-                        let { data: branchesData } = await get(accessToken, branchLink);
-
-                        let commitsData = [];
-
-                        for (let j = 0; j <= branchesData.length - 1; j++) {
-                            let { data: commits } = await get(
-                                accessToken,
-                                commitLink + "?sha=" + branchesData[j].commit.sha
-                            );
-                            commits = { [branchesData[j].name]: commits };
-                            commitsData = [...commitsData, commits];
-                        }
-                        _.map(commitsData, commits => {
-                            _.mapValues(commits, (value, key) => {
-                                commitsData = _.map(value, v => {
-                                    return {
-                                        repo: {
-                                            name: orgsReposData[i].name,
-                                            owner: {
-                                                name: orgsReposData[i].owner.login,
-                                                avatarUrl: orgsReposData[i].owner.avatar_url
-                                            }
-                                        },
-                                        branchName: key,
-                                        message: v.commit.message,
-                                        committer: {
-                                            avatarUrl: v.committer.avatar_url,
-                                            name: v.committer.login,
-                                            id: v.committer.id,
-                                            type: v.committer.type
-                                        },
-                                        date: v.commit.committer.date
-                                    };
-                                });
-                                gitHubData = [...gitHubData, ...commitsData];
-                            });
-                        });
-                    }
+                if (_.includes(repoNames, orgData.name)) {
+                    branchsLink.push(orgData.branches_url.slice(0, -9));
+                    commitsLink.push(orgData.commits_url.slice(0, -6));
                 }
-            }
-        }
+            })
+            const branchDataPromises = _.map(branchsLink, (branchLink) => get(accessToken, branchLink))
+            let branchesDataResponse = await Promise.all(branchDataPromises);
+            _.each(branchesDataResponse, (branchData) => branchesData = [...branchesData, ...branchData.data]); 
+            const keyedBranches = _.keyBy(branchesData, 'commit.sha')
+            console.log(JSON.stringify(keyedBranches));
+            _.each(commitsLink, (commitLink) => {
+                _.each(branchesData, (branchData) => {
+                    if(branchData.commit.url.includes(commitLink))
+                    commitsDataPromises.push(get(accessToken, commitLink + "?sha=" + branchData.commit.sha))
+                })
+            })
+            const commitsDataResponse = await Promise.all(commitsDataPromises);
+            _.each(commitsDataResponse, (commitData) => commitsData = [...commitsData, ...commitData.data])
+            _.each(commitsData, commits => {
+                gitHubData.push({
+                    // repo: {
+                    //     name: orgsReposData[i].name,
+                    //     owner: {
+                    //         name: orgsReposData[i].owner.login,
+                    //         avatarUrl: orgsReposData[i].owner.avatar_url
+                    //     }
+                    // },
+                    branchName: keyedBranches[commits.sha] && keyedBranches[commits.sha].name || keyedBranches[commits.sha].name,
+                    message: commits.commit.message,
+                    committer: {
+                        avatarUrl: commits.committer && commits.committer.avatar_url,
+                        name:
+                            (commits.committer && commits.committer.login) ||
+                            commits.commit.committer.name,
+                        id: commits.committer && commits.committer.id,
+                        type: commits.committer && commits.committer.type
+                    },
+                    date: commits.commit.committer.date
+                });
+            });
+                                
+                            
+            // if (_.isEmpty(repoNames)) {
+            //     for (let i = 0; i <= orgsReposData.length - 1; i++) {
+            //         const branchLink = orgsReposData[i].branches_url.slice(0, -9);
+            //         let commitLink = orgsReposData[i].commits_url.slice(0, -6);
+            //         allRepoNames.push(orgsReposData[i].name);
+
+            //         let { data: branchesData } = await get(accessToken, branchLink);
+
+            //         let commitsData = [];
+
+            //         for (let j = 0; j <= branchesData.length - 1; j++) {
+            //             let { data: commits } = await get(
+            //                 accessToken,
+            //                 commitLink + "?sha=" + branchesData[j].commit.sha
+            //             );
+            //             commits = { [branchesData[j].name]: commits };
+            //             commitsData = [...commitsData, commits];
+            //         }
+            //         _.map(commitsData, commits => {
+            //             _.mapValues(commits, (value, key) => {
+            //                 commitsData = _.map(value, v => {
+            //                     return {
+            //                         repo: {
+            //                             name: orgsReposData[i].name,
+            //                             owner: {
+            //                                 name: orgsReposData[i].owner.login,
+            //                                 avatarUrl: orgsReposData[i].owner.avatar_url
+            //                             }
+            //                         },
+            //                         branchName: key,
+            //                         message: v.commit.message,
+            //                         committer: {
+            //                             avatarUrl: v.committer && v.committer.avatar_url,
+            //                             name:
+            //                                 (v.committer && v.committer.login) ||
+            //                                 v.commit.committer.name,
+            //                             id: v.committer && v.committer.id,
+            //                             type: v.committer && v.committer.type
+            //                         },
+            //                         date: v.commit.committer.date
+            //                     };
+            //                 });
+            //                 gitHubData = [...gitHubData, ...commitsData];
+            //             });
+            //         });
+            //     }
+            //     repoNames = allRepoNames;
+            // } else {
+            //     for (let i = 0; i <= orgsReposData.length - 1; i++) {
+            //         allRepoNames.push(orgsReposData[i].name);
+            //         if (_.includes(repoNames, orgsReposData[i].name)) {
+            //             const branchLink = orgsReposData[i].branches_url.slice(0, -9);
+            //             let commitLink = orgsReposData[i].commits_url.slice(0, -6);
+
+                    //     let { data: branchesData } = await get(accessToken, branchLink);
+
+                    //     let commitsData = [];
+
+                    //     for (let j = 0; j <= branchesData.length - 1; j++) {
+                    //         let { data: commits } = await get(
+                    //             accessToken,
+                    //             commitLink + "?sha=" + branchesData[j].commit.sha
+                    //         );
+                    //         commits = { [branchesData[j].name]: commits };
+                    //         commitsData = [...commitsData, commits];
+                    //     }
+                    //     _.map(commitsData, commits => {
+                    //         _.mapValues(commits, (value, key) => {
+                    //             commitsData = _.map(value, v => {
+                    //                 return {
+                    //                     repo: {
+                    //                         name: orgsReposData[i].name,
+                    //                         owner: {
+                    //                             name: orgsReposData[i].owner.login,
+                    //                             avatarUrl: orgsReposData[i].owner.avatar_url
+                    //                         }
+                    //                     },
+                    //                     branchName: key,
+                    //                     message: v.commit.message,
+                    //                     committer: {
+                    //                         avatarUrl: v.committer.avatar_url,
+                    //                         name: v.committer.login,
+                    //                         id: v.committer.id,
+                    //                         type: v.committer.type
+                    //                     },
+                    //                     date: v.commit.committer.date
+                    //                 };
+                    //             });
+                    //             gitHubData = [...gitHubData, ...commitsData];
+                    //         });
+                        // });
+                    }
+                // }
+            // }
+        // }
 
         projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
-        console.log(clientData, 'client Data  ************')
         if (_.isEmpty(allProjectKeys)) {
             try {
                 const data = await getAllProjects(
@@ -207,7 +256,7 @@ export default function routes(app, addon) {
             title: "Headlines",
             data: userIssues,
             projects: allProjectKeys,
-            gitHubData: gitHubData,
+            gitHubData,
             repoNames: allRepoNames,
             showGithubUrl: _.isEmpty(accessToken),
             jiraAccessToken: jiraAccessToken
