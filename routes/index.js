@@ -56,7 +56,8 @@ export default function routes(app, addon) {
             const branchDataPromises = _.map(branchsLink, (branchLink) => get(accessToken, branchLink))
             let branchesDataResponse = await Promise.all(branchDataPromises);
             _.each(branchesDataResponse, (branchData) => branchesData = [...branchesData, ...branchData.data]);
-            const keyedBranches = _.keyBy(branchesData, 'commit.sha')
+            // const keyedBranches = _.keyBy(branchesData, (branchData) => branchData.commit.url.split('/commits/')[0].replace('api.', '').replace('/repos', ''));
+            console.log(JSON.stringify(branchesData));
             _.each(commitsLink, (commitLink) => {
                 _.each(branchesData, (branchData) => {
                     if (branchData.commit.url.includes(commitLink))
@@ -66,6 +67,7 @@ export default function routes(app, addon) {
             const commitsDataResponse = await Promise.all(commitsDataPromises);
             _.each(commitsDataResponse, (commitData) => commitsData = [...commitsData, ...commitData.data])
             const keyedOrgsData = _.keyBy(orgsData, 'html_url')
+            console.log(JSON.stringify(commitsData));
             _.each(commitsData, commits => {
                 gitHubData.push({
                     repo: {
@@ -75,7 +77,7 @@ export default function routes(app, addon) {
                             avatarUrl: keyedOrgsData[_.first(commits.html_url.split('/commit/'))] && keyedOrgsData[_.first(commits.html_url.split('/commit/'))].owner.avatar_url
                         }
                     },
-                    // branchName: keyedBranches[commits.sha] && keyedBranches[commits.sha].name || keyedBranches[commits.sha].name,
+                    branchName: keyedBranches[_.first(commits.html_url.split('/commit/'))] && keyedBranches[_.first(commits.html_url.split('/commit/'))].name,
                     message: commits.commit.message,
                     committer: {
                         avatarUrl: commits.committer && commits.committer.avatar_url,
