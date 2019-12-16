@@ -190,6 +190,7 @@ export default function routes(app, addon) {
     });
 
     app.get("/github-setup", (req, res, next) => {
-        res.redirect("https://github.com/settings/apps/jira-git-headlines/installations");
+        const randomString = Math.random().toString(36).substring(7);
+        res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env.client_id}&client_secret=${process.env.client_secret}&scope=user&state=${randomString}&allow_signup=true`);
     });
 }
