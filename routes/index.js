@@ -5,7 +5,6 @@ import { Installations } from "../db";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
 import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
-import { cpus } from "os";
 
 let CLIENT_KEY = null;
 
@@ -189,7 +188,7 @@ export default function routes(app, addon) {
     });
 
     app.post("/github/events", (req, res, next) => {
-        // console.log(req, "Webhook url");
+        console.log(req, "Webhook url");
     });
 
     app.get("/github-setup", (req, res, next) => {
