@@ -5,6 +5,7 @@ import { Installations } from "../db";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
 import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
+import { cpus } from "os";
 
 let CLIENT_KEY = null;
 
@@ -56,18 +57,21 @@ export default function routes(app, addon) {
             const branchDataPromises = _.map(branchsLink, (branchLink) => get(accessToken, branchLink))
             let branchesDataResponse = await Promise.all(branchDataPromises);
             _.each(branchesDataResponse, (branchData) => branchesData = [...branchesData, ...branchData.data]);
-            // const keyedBranches = _.keyBy(branchesData, (branchData) => branchData.commit.url.split('/commits/')[0].replace('api.', '').replace('/repos', ''));
-            console.log(JSON.stringify(branchesData));
             _.each(commitsLink, (commitLink) => {
                 _.each(branchesData, (branchData) => {
                     if (branchData.commit.url.includes(commitLink))
-                        commitsDataPromises.push(get(accessToken, commitLink + "?sha=" + branchData.commit.sha))
+                        commitsDataPromises.push(get(accessToken, commitLink + "?sha=" + branchData.commit.sha, branchData.name))
                 })
             })
             const commitsDataResponse = await Promise.all(commitsDataPromises);
-            _.each(commitsDataResponse, (commitData) => commitsData = [...commitsData, ...commitData.data])
+            _.each(commitsDataResponse, (commitData) => {
+                commitsData = [...commitsData, ...commitData.data]
+                _.each(commitData.data, (singleCommit) => {
+                    singleCommit.branchName = commitData.config.headers.branchName
+                })
+            })
+            // _.each(commitsDataResponse, (commitData) => )
             const keyedOrgsData = _.keyBy(orgsData, 'html_url')
-            console.log(JSON.stringify(commitsData));
             _.each(commitsData, commits => {
                 gitHubData.push({
                     repo: {
@@ -77,7 +81,7 @@ export default function routes(app, addon) {
                             avatarUrl: keyedOrgsData[_.first(commits.html_url.split('/commit/'))] && keyedOrgsData[_.first(commits.html_url.split('/commit/'))].owner.avatar_url
                         }
                     },
-                    branchName: keyedBranches[_.first(commits.html_url.split('/commit/'))] && keyedBranches[_.first(commits.html_url.split('/commit/'))].name,
+                    branchName: commits.branchName,
                     message: commits.commit.message,
                     committer: {
                         avatarUrl: commits.committer && commits.committer.avatar_url,
