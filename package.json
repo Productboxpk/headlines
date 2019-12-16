@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "client_id='Iv1.56d8c818f7aef464' client_secret='ebe50b512f350674592db542fe1825c53967f27e' session_secret='e_cnpn7&h*2t7&p$n4@_e5)v6v*+)pnnliw@v^11@(gi!onjtj' node -r esm app.js",
+    "start": "node -r esm app.js",
     "lint": "eslint app.js routes"
   },
   "dependencies": {
