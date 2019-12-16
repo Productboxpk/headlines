@@ -70,7 +70,6 @@ export default function routes(app, addon) {
                     singleCommit.branchName = commitData.config.headers.branchName
                 })
             })
-            // _.each(commitsDataResponse, (commitData) => )
             const keyedOrgsData = _.keyBy(orgsData, 'html_url')
             _.each(commitsData, commits => {
                 gitHubData.push({
@@ -84,7 +83,7 @@ export default function routes(app, addon) {
                     branchName: commits.branchName,
                     message: commits.commit.message,
                     committer: {
-                        avatarUrl: commits.committer && commits.committer.avatar_url,
+                        avatarUrl: commits.committer && commits.committer.avatar_url || 'abc',
                         name:
                             (commits.committer && commits.committer.login) ||
                             commits.commit.committer.name,
