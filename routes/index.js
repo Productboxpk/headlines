@@ -23,7 +23,9 @@ export default function routes(app, addon) {
     });
     
     app.get("/headlines", async (req, res, next) => {
-            const { sub } = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true);
+        console.log('using cron');
+            const requestJwt = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true) || null;
+            const sub = requestJwt && requestJwt.sub || null;
             const { accessToken: jiraAccessToken, updatedClient: clientData } = await token(CLIENT_KEY, sub);
             let allProjectKeys = [];
             let projectKeys = req.query.projectKey;
@@ -197,11 +199,11 @@ export default function routes(app, addon) {
     app.get("/github-setup", (req, res, next) => {
         res.redirect("https://github.com/settings/apps/jira-git-headlines/installations");
     });
-    cron.schedule('*/10 * * * * * *', () => {
+    cron.schedule('*/30 * * * * * *', () => {
         console.log('here')
         if(isCalled){
             console.log('here1')
-    app.get('/headlines');
+        request('http://localhost:3000/headlines');
         }
     })
 

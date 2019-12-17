@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "client_id='Iv1.56d8c818f7aef464' client_secret='ebe50b512f350674592db542fe1825c53967f27e' session_secret='e_cnpn7&h*2t7&p$n4@_e5)v6v*+)pnnliw@v^11@(gi!onjtj' node -r esm app.js",
+    "start": "client_id='Iv1.56d8c818f7aef464' client_secret='ebe50b512f350674592db542fe1825c53967f27e' session_secret='e_cnpn7&h*2t7&p$n4@_e5)v6v*+)pnnliw@v^11@(gi!onjtj' nodemon -r esm app.js",
     "lint": "eslint app.js routes"
   },
   "dependencies": {
@@ -21,6 +21,7 @@
     "express-session": "^1.17.0",
     "lodash": "^4.17.15",
     "morgan": "^1.9.1",
+    "node-cron": "^2.0.3",
     "pg": "^7.12.1",
     "pg-hstore": "^2.3.3",
     "sequelize": "^5.21.2",
