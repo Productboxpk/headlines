@@ -21,14 +21,7 @@ export default function routes(app, addon) {
     app.get("/", (req, res) => {
         res.redirect("/atlassian-connect.json");
     });
-    cron.schedule('10 * * * * *', () => {
-        console.log('here')
-        if(isCalled){
-            console.log('here1')
-    app.get('/headlines');
-        }
-    })
-
+    
     app.get("/headlines", async (req, res, next) => {
             const { sub } = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true);
             const { accessToken: jiraAccessToken, updatedClient: clientData } = await token(CLIENT_KEY, sub);
@@ -198,10 +191,18 @@ export default function routes(app, addon) {
     });
 
     app.post("/github/events", (req, res, next) => {
-        // console.log(req, "Webhook url");
+        console.log(req, "Webhook url");
     });
 
     app.get("/github-setup", (req, res, next) => {
         res.redirect("https://github.com/settings/apps/jira-git-headlines/installations");
     });
+    cron.schedule('*/10 * * * * * *', () => {
+        console.log('here')
+        if(isCalled){
+            console.log('here1')
+    app.get('/headlines');
+        }
+    })
+
 }
