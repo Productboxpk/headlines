@@ -8,6 +8,7 @@ import * as jwt from "atlassian-jwt";
 const cron = require('node-cron');
 const request = require("request");
 let isCalled = false;
+const hbs= require('express-hbs');
 
 let CLIENT_KEY = null;
 
@@ -23,7 +24,6 @@ export default function routes(app, addon) {
     });
     
     app.get("/headlines", async (req, res, next) => {
-        console.log('using cron');
             const requestJwt = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true) || null;
             const sub = requestJwt && requestJwt.sub || null;
             const { accessToken: jiraAccessToken, updatedClient: clientData } = await token(CLIENT_KEY, sub);
@@ -31,7 +31,7 @@ export default function routes(app, addon) {
             let projectKeys = req.query.projectKey;
             let repoNames = req.query.repoNames;
             let userIssues = [];
-
+            let projects = [];
             let accessToken;
             let gitHubData = [];
             const allRepoNames = [];
@@ -42,6 +42,7 @@ export default function routes(app, addon) {
                 let branchesData = [];
                 let commitsData = [];
                 const { data: orgs } = await getCurrentUserOrganizations(accessToken);
+                console.log(JSON.stringify(orgs));
                 const orgsReposDataPromises = _.map(orgs, (org) => { return get(accessToken, org.repos_url) });
                 let orgsData = await Promise.all(orgsReposDataPromises);
                 orgsData = _.first(orgsData).data;
@@ -97,74 +98,38 @@ export default function routes(app, addon) {
                         date: commits.commit.committer.date
                     });
                 });
+                gitHubData = _.sortBy(gitHubData, commit => {
+                    return commit.date;
+                });
+                gitHubData = _.reverse(gitHubData);    
             }
 
             projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
             if (_.isEmpty(allProjectKeys)) {
-                try {
-                    const data = await getAllProjects(
-                        jiraAccessToken,
-                        clientData.data.baseUrl
-                    );
+                    const data = await getAllProjects( jiraAccessToken,clientData.data.baseUrl);
                     allProjectKeys = _.map(data, k => k.key);
-                } catch (err) {
-                    console.log(err, "Error is here");
-                }
+                    projectKeys = [...allProjectKeys];
             }
-
-            if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
-
-            if (projectKeys.length === 1) {
-                try {
-                    let data = await getAllProjectIssues(
-                        jiraAccessToken,
-                        clientData.data.baseUrl,
-                        projectKeys
-                    );
-                    userIssues = [...userIssues, ...data];
-                } catch (err) {
-                    console.log(err, "Error is here");
-                }
-            } else {
-                try {
-                    for (let i = 0; i <= projectKeys.length - 1; i++) {
-                        let data = await getAllProjectIssues(
-                            jiraAccessToken,
-                            clientData.data.baseUrl,
-                            projectKeys[i]
-                        );
-                        userIssues = [...userIssues, ...data];
+            if (projectKeys.length) {
+                const projectPromises = _.map(projectKeys, (projectKey) => getAllProjectIssues(jiraAccessToken, clientData.data.baseUrl, projectKey));
+                const projectResponse = await Promise.all(projectPromises);
+                _.each(projectResponse, (project) => userIssues = [...userIssues, ...project]);
+                _.each(userIssues, (userIssue) => {
+                    if (userIssue.histories.length && userIssue.histories[0].from) {
+                        // const accountId =
+                        //     userIssue.histories.length && userIssue.histories[0].from;
+                        // userIssue.histories[0].avatars = await getUserByAccountId(
+                        //     jiraAccessToken,
+                        //     clientData.data.baseUrl,
+                        //     accountId
+                        // );
                     }
-                } catch (err) {
-                    console.log(err, "Error is here");
-                }
+                })
+                userIssues = _.sortBy(userIssues, i => {
+                    return i.fields.updated;
+                });
+                userIssues = _.reverse(userIssues);    
             }
-            try {
-                for (let i = 0; i <= userIssues.length - 1; i++) {
-                    if (userIssues[i].histories.length && userIssues[i].histories[0].from) {
-                        const accountId =
-                            userIssues[i].histories.length && userIssues[i].histories[0].from;
-                        userIssues[i].histories[0].avatars = await getUserByAccountId(
-                            jiraAccessToken,
-                            clientData.data.baseUrl,
-                            accountId
-                        );
-                    }
-                }
-            } catch (err) {
-                console.log(err, "Error is here");
-            }
-
-            userIssues = _.sortBy(userIssues, i => {
-                return i.fields.updated;
-            });
-            userIssues = _.reverse(userIssues);
-
-            gitHubData = _.sortBy(gitHubData, commit => {
-                return commit.date;
-            });
-            gitHubData = _.reverse(gitHubData);
-            isCalled = true;
             res.render("headlines", {
                 title: "Headlines",
                 data: userIssues,
@@ -199,12 +164,4 @@ export default function routes(app, addon) {
     app.get("/github-setup", (req, res, next) => {
         res.redirect("https://github.com/settings/apps/jira-git-headlines/installations");
     });
-    cron.schedule('*/30 * * * * * *', () => {
-        console.log('here')
-        if(isCalled){
-            console.log('here1')
-        request('http://localhost:3000/headlines');
-        }
-    })
-
 }
