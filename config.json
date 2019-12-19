@@ -4,8 +4,8 @@
         "errorTemplate": true,
         "store": {
             "database": "jira",
-            "username": "postgres",
-            "password": "root",
+            "username": "",
+            "password": "",
             "adapter": "sequelize",
             "dialect": "postgres",
             "url": "postgres://localhost/jira"
