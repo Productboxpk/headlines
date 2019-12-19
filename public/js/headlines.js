@@ -28,7 +28,7 @@ AJS.$(window).load(function () {
         });
     })
     $('.repositories-link').on('click', function (e) {
-        $('.branches-container .jira-loader').removeClass('hide-loader')
+        $('.branches-container .github-loader').removeClass('hide-loader')
         clickedRepo = $(this).attr('name');
         let getSelectedProjectLinkUrl = null;
         if (clickedRepo === 'All') {
@@ -42,7 +42,7 @@ AJS.$(window).load(function () {
             success: function (data) {
                 $('.branches-container').replaceWith(`<div class="branches-container">${$(".branches-container", data).html()}</div>`);
                 $('.branches-container .jira-loader').addClass('hide-loader')
-                $('.jira-dropdown').click();
+                $('.git-dropdown').click();
                 clickedProject = null;
                 e.target.checked = false;
             }

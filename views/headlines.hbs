@@ -32,11 +32,12 @@
 
 							{{#unless showGithubUrl}}
 							<a href="#github-repos" aria-owns="github-repos" aria-haspopup="true"
-								class="aui-button aui-style-default aui-dropdown2-trigger">
+								class="aui-button aui-style-default aui-dropdown2-trigger git-dropdown">
 								Repositories
 							</a>
 							<div id="github-repos" class="aui-style-default aui-dropdown2">
 								<ul class="aui-list-truncate">
+									<li><input type="checkbox" class="repositories-link" name='All'>All</a></li>
 									{{#each repoNames as |item|}}
 									<li><input type="checkbox" class="repositories-link" name={{item}}>{{item}}</a></li>
 									{{/each}}
