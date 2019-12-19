@@ -1,5 +1,7 @@
 AJS.$(window).load(function () {
-    setTimeout(function() {
+    // let jwt_token = AJS.$('meta[name="token"]').attr("content");
+    let jiraAccessToken = AJS.$('meta[name="jiraAccessToken"]').attr("content");
+    setInterval(function() {
         const getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`;
         $.ajax({
             type: 'GET',
@@ -12,8 +14,7 @@ AJS.$(window).load(function () {
             }
         });
     },10000)
-    // let jwt_token = AJS.$('meta[name="token"]').attr("content");
-    let jiraAccessToken = AJS.$('meta[name="jiraAccessToken"]').attr("content");
+    
     let clickedProject = null;
     let clickedRepo = null;
     $('.project-link').on('click', function (e) {
