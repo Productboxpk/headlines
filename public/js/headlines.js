@@ -1,10 +1,32 @@
-AJS.$(window).load(function() {
+AJS.$(window).load(function () {
     // let jwt_token = AJS.$('meta[name="token"]').attr("content");
     let jiraAccessToken = AJS.$('meta[name="jiraAccessToken"]').attr("content");
-    
+
     let projectKeys = [];
     let repoNames = [];
-
+    let clickedProject = null;
+    let clickedRepo = null;
+    $('.project-link').on('click', function (e) {
+        $('.issues-container .jira-loader').removeClass('hide-loader')
+        clickedProject = $(this).attr('name');
+        let getSelectedProjectLinkUrl = null;
+        if (clickedProject === 'All') {
+            getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`
+        } else {
+            getSelectedProjectLinkUrl = `headlines?projectKey=${clickedProject}&repoNames=${clickedRepo}&jwt=${jiraAccessToken}`;
+        }
+        $.ajax({
+            type: 'GET',
+            url: getSelectedProjectLinkUrl,
+            success: function (data) {
+                $('.issues-container').replaceWith(`<div class="issues-container">${$(".issues-container", data).html()}</div>`);
+                $('.issues-container .jira-loader').addClass('hide-loader')
+                $('.jira-dropdown').click();
+                clickedProject = null;
+                e.target.checked = false;
+            }
+        });
+    })
     // function addEventListeners() {
     //     let jiraProjects = document.getElementsByClassName("project-link");
     //     let githubRepos = document.getElementsByClassName("repositories-link");

@@ -108,9 +108,10 @@ export default function routes(app, addon) {
             if (_.isEmpty(allProjectKeys)) {
                     const data = await getAllProjects( jiraAccessToken,clientData.data.baseUrl);
                     allProjectKeys = _.map(data, k => k.key);
-                    projectKeys = [...allProjectKeys];
             }
-            if (projectKeys.length) {
+
+            if(_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
+            if (projectKeys && projectKeys.length) {
                 const projectPromises = _.map(projectKeys, (projectKey) => getAllProjectIssues(jiraAccessToken, clientData.data.baseUrl, projectKey));
                 const projectResponse = await Promise.all(projectPromises);
                 _.each(projectResponse, (project) => userIssues = [...userIssues, ...project]);

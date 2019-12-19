@@ -18,11 +18,12 @@
 							</button>
 
 							<a href="#jira-projects" aria-owns="jira-projects" aria-haspopup="true"
-								class="aui-button aui-style-default aui-dropdown2-trigger">
+								class="aui-button aui-style-default aui-dropdown2-trigger jira-dropdown">
 								Projects
 							</a>
 							<div id="jira-projects" class="aui-style-default aui-dropdown2">
 								<ul class="aui-list-truncate">
+									<li><input type="checkbox" class="project-link" name='All'>All</a></li>
 									{{#each projects as |item|}}
 									<li><input type="checkbox" class="project-link" name={{item}}>{{item}}</a></li>
 									{{/each}}
@@ -45,7 +46,8 @@
 
 							{{#if showGithubUrl}}
 							{{!-- <a href="/github-setup" target="_blank">Click to Setup GitHub</a> --}}
-							<a href="https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations" target="_blank">Click to Setup GitHub</a>
+							<a href="https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations"
+								target="_blank">Click to Setup GitHub</a>
 							{{/if}}
 
 							{{!-- <button class="aui-button" id="maximize-display">
