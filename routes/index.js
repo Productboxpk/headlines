@@ -110,6 +110,7 @@ export default function routes(app, addon) {
                 const projectResponse = await Promise.all(projectPromises);
                 _.each(projectResponse, (project) => userIssues = [...userIssues, ...project]);
                 _.each(userIssues, (userIssue) => {
+                    userIssue.issueLink = `${clientData.data.baseUrl}/browse/${userIssue.key}`;
                     if (userIssue.histories.length && userIssue.histories[0].from) {
                         // const accountId =
                         //     userIssue.histories.length && userIssue.histories[0].from;
