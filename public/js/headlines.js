@@ -2,7 +2,7 @@ AJS.$(window).load(function () {
     // let jwt_token = AJS.$('meta[name="token"]').attr("content");
     let jiraAccessToken = AJS.$('meta[name="jiraAccessToken"]').attr("content");
     setInterval(function() {
-        const getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`;
+        const getSelectedProjectLinkUrl = `headlines?projectKey=${clickedProject}&repoNames=${clickedRepo}&jwt=${jiraAccessToken}`;
         $.ajax({
             type: 'GET',
             url: getSelectedProjectLinkUrl,
@@ -33,8 +33,6 @@ AJS.$(window).load(function () {
                 $('.issues-container').replaceWith(`<div class="issues-container">${$(".issues-container", data).html()}</div>`);
                 $('.issues-container .jira-loader').addClass('hide-loader')
                 $('.jira-dropdown').click();
-                clickedProject = null;
-                e.target.checked = false;
             }
         });
     })
@@ -54,8 +52,6 @@ AJS.$(window).load(function () {
                 $('.branches-container').replaceWith(`<div class="branches-container">${$(".branches-container", data).html()}</div>`);
                 $('.branches-container .jira-loader').addClass('hide-loader')
                 $('.git-dropdown').click();
-                clickedProject = null;
-                e.target.checked = false;
             }
         });
     })
