@@ -64,12 +64,12 @@
 										stroke-miterlimit="10" />
 								</svg>
 							</div>
-
+							
 							{{#each data}}
 							<div class="card">
 								<h4 class="issue-key">
 									<img class="isssue-type-avatar" src={{fields.issuetype.iconUrl}}></img>
-									{{key}}
+									<a href={{issueLink}} target="_blank">{{key}} </a>
 								</h4>
 								<h5 class="issue-summary">{{fields.summary}}</h5>
 								<h6>Last updated: {{DateFormatter fields.updated}} </h6>
