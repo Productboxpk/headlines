@@ -2,7 +2,7 @@ AJS.$(window).load(function () {
     // let jwt_token = AJS.$('meta[name="token"]').attr("content");
     let jiraAccessToken = AJS.$('meta[name="jiraAccessToken"]').attr("content");
     setInterval(function() {
-        const getSelectedProjectLinkUrl = `headlines?projectKey=${clickedProject}&repoNames=${clickedRepo}&jwt=${jiraAccessToken}`;
+        const getSelectedProjectLinkUrl = `headlines?projectKey=${clickedProject === null ? '' : clickedProject}&repoNames=${clickedRepo === null ? '' : clickedRepo}&jwt=${jiraAccessToken}`;
         $.ajax({
             type: 'GET',
             url: getSelectedProjectLinkUrl,
