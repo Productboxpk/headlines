@@ -5,10 +5,6 @@ import { Installations } from "../db";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
 import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
-const cron = require('node-cron');
-const request = require("request");
-let isCalled = false;
-const hbs= require('express-hbs');
 
 let CLIENT_KEY = null;
 
@@ -31,7 +27,6 @@ export default function routes(app, addon) {
             let projectKeys = req.query.projectKey;
             let repoNames = req.query.repoNames;
             let userIssues = [];
-            let projects = [];
             let accessToken;
             let gitHubData = [];
             const allRepoNames = [];
@@ -42,7 +37,6 @@ export default function routes(app, addon) {
                 let branchesData = [];
                 let commitsData = [];
                 const { data: orgs } = await getCurrentUserOrganizations(accessToken);
-                console.log(JSON.stringify(orgs));
                 const orgsReposDataPromises = _.map(orgs, (org) => { return get(accessToken, org.repos_url) });
                 let orgsData = await Promise.all(orgsReposDataPromises);
                 orgsData = _.first(orgsData).data;
