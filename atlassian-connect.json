@@ -2,7 +2,6 @@
     "key": "jira-git-headlines",
     "name": "Jira & Git Headlines",
     "description": "This plugin shows the recent updated tickets and branches of all projects a user is working on",
-    // "enableLicensing": true,
     "productType": "jira",
     "vendor": {
         "name": "Productbox",
