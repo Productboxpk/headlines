@@ -24,4 +24,8 @@ if (process.env.DATABASE_URL) {
 }
 const Installations = InstallationsModel(sequelize, Sequelize);
 
+sequelize.sync({ force: true }).then(() => {
+    console.log(`Database & tables created!`);
+});
+
 export { Installations };
