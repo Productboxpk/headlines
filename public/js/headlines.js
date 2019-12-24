@@ -26,8 +26,8 @@ AJS.$(window).load(function () {
         $('.issues-container .jira-loader').removeClass('hide-loader')
         clickedProject = $(this).attr('name');
         let getSelectedProjectLinkUrl = null;
+        const allCheckedProjects = $('#jira-projects .project-link');
         if (clickedProject === 'All') {
-            const allCheckedProjects = $('#jira-projects .project-link');
             for (let index = 0; index < allCheckedProjects.length; index++) {
                 if ($(allCheckedProjects[index]).attr('name') !== 'All') {
                     $(allCheckedProjects[index]).prop('checked', false)
@@ -36,10 +36,20 @@ AJS.$(window).load(function () {
             getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`
         }
         if (e.target.checked && clickedProject !== 'All') {
+            for (let index = 0; index < allCheckedProjects.length; index++) {
+                if ($(allCheckedProjects[index]).attr('name') === 'All') {
+                    $(allCheckedProjects[index]).prop('checked', false)
+                }
+            }
             projectKeys.push(clickedProject);
             getSelectedProjectLinkUrl = `headlines?projectKey=${projectKeys}&repoNames=${projectRepos}&jwt=${jiraAccessToken}`;
         }
         if (!e.target.checked && clickedProject !== 'All') {
+            for (let index = 0; index < allCheckedProjects.length; index++) {
+                if ($(allCheckedProjects[index]).attr('name') === 'All') {
+                    $(allCheckedProjects[index]).prop('checked', false)
+                }
+            }
             const removeIndex = projectKeys.indexOf(clickedProject);
             projectKeys.splice(removeIndex, 1);
         }
@@ -56,9 +66,9 @@ AJS.$(window).load(function () {
     $('.repositories-link').on('click', function (e) {
         $('.branches-container .github-loader').removeClass('hide-loader')
         clickedRepo = $(this).attr('name');
+        const allCheckedProjects = $('#github-repos .repositories-link');
         let getSelectedProjectLinkUrl = null;
-        if (e.target.checked && clickedProject === 'All') {
-            const allCheckedProjects = $('#github-repos .repositories-link');
+        if (clickedRepo === 'All') {
             for (let index = 0; index < allCheckedProjects.length; index++) {
                 if ($(allCheckedProjects[index]).attr('name') !== 'All') {
                     $(allCheckedProjects[index]).prop('checked', false)
@@ -66,12 +76,22 @@ AJS.$(window).load(function () {
             }
             getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`
         }
-        if (e.target.checked) {
+        if (e.target.checked && clickedRepo !== 'All') {
+            for (let index = 0; index < allCheckedProjects.length; index++) {
+                if ($(allCheckedProjects[index]).attr('name') === 'All') {
+                    $(allCheckedProjects[index]).prop('checked', false)
+                }
+            }
             projectRepos.push(clickedRepo);
             getSelectedProjectLinkUrl = `headlines?projectKey=${projectKeys}&repoNames=${projectRepos}&jwt=${jiraAccessToken}`;
         }
-        if (!e.target.checked) {
-            const removeIndex = projectRepos.indexOf(clickedProject);
+        if (!e.target.checked && clickedRepo !== 'All') {
+            for (let index = 0; index < allCheckedProjects.length; index++) {
+                if ($(allCheckedProjects[index]).attr('name') === 'All') {
+                    $(allCheckedProjects[index]).prop('checked', false)
+                }
+            }
+            const removeIndex = projectRepos.indexOf(clickedRepo);
             projectRepos.splice(removeIndex, 1);
         }
 
