@@ -1,6 +1,6 @@
 {
     "key": "headlines-jira",
-    "name": "Headlines for jira",
+    "name": "Headlines for Jira",
     "description": "This plugin shows the recent updated tickets and branches of all projects a user is working on",
     "productType": "jira",
     "vendor": {
