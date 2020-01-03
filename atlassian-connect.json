@@ -16,10 +16,10 @@
         "type": "jwt"
     },
     "lifecycle": {
-        "installed": "jira/events/installed",
+        "installed": "jira/events/install",
         "enabled": "jira/events//enabled",
         "disabled": "jira/events/disabled",
-        "uninstalled": "jira/events/uninstalled"
+        "uninstalled": "jira/events/uninstall"
     },
     "scopes": [
         "READ",
