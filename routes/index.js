@@ -7,7 +7,7 @@ import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
 
 export default function routes(app, addon) {
-    app.post("/installed", async (req, res, next) => {
+    app.post("jira/events/installed", async (req, res, next) => {
         const authJWT = req.headers.authorization.slice(4);
         const {sub, iss} = jwt.decode(authJWT, "", true);
         if (iss === req.body.clientKey){
@@ -16,7 +16,7 @@ export default function routes(app, addon) {
         }
     });
 
-    app.post("/enabled", async (req, res, next) => {
+    app.post("jira/events/enabled", async (req, res, next) => {
         console.log("I am enabled");
     });
 
@@ -37,6 +37,12 @@ export default function routes(app, addon) {
             let accessToken;
             let gitHubData = [];
             const allRepoNames = [];
+
+           await addon.on('github_token_success', async (token)  => {
+                const client = await Installations.findByPk(clientData.client_key)
+                await client.update({ github_access_token: token.accessToken }, { where: { client_key: clientData.client_key } });
+                accessToken = token;
+            });
 
             if (!_.isEmpty(clientData && clientData.github_access_token)) {
                 accessToken = clientData.github_access_token;
@@ -150,20 +156,13 @@ export default function routes(app, addon) {
         // testing token
         const { status } = await getCurrentUser(accessToken);
         if (status === 200) {
-            const client = await Installations.findByPk(addon.descriptor.clientKey)
-            const updatedClient = await client.update({ github_access_token: accessToken }, { where: { client_key: addon.descriptor.clientKey } });
-            if (updatedClient) {
-                res.redirect(
-                    `${updatedClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`
-                );
-            }
+            addon.emit('github_token_success', {accessToken})
         }
     });
 
     app.post("/github/events", (req, res, next) => {
         console.log(req, "Webhook url");
     });
-  
 
     app.get("/github-setup", (req, res, next) => {
         const reqJWT = req.headers.referer.slice(req.headers.referer.indexOf("jwt") + 4);
