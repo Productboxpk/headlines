@@ -6,13 +6,18 @@ import { findAndUpdateElseInsert } from "../lib/models/installation";
 import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
 
-let CLIENT_KEY = null;
-
 export default function routes(app, addon) {
     app.post("/installed", async (req, res, next) => {
-        CLIENT_KEY = req.body.clientKey;
-        await findAndUpdateElseInsert(Installations, req.body);
-        return res.sendStatus(200);
+        const authJWT = req.headers.authorization.slice(4);
+        const {sub, iss} = jwt.decode(authJWT, "", true);
+        if (iss === req.body.clientKey){
+            await findAndUpdateElseInsert(Installations, req.body, sub);
+            return res.sendStatus(200);
+        }
+    });
+
+    app.post("/enabled", async (req, res, next) => {
+        console.log("I am enabled");
     });
 
     app.get("/", (req, res) => {
@@ -22,7 +27,9 @@ export default function routes(app, addon) {
     app.get("/headlines", async (req, res, next) => {
             const requestJwt = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true) || null;
             const sub = requestJwt && requestJwt.sub || null;
-            const { accessToken: jiraAccessToken, updatedClient: clientData } = await token(CLIENT_KEY, sub);
+            let iss = requestJwt && requestJwt.iss || null;
+            if(iss === 'micros/oauth-2-authorization-server') iss = ''; // Somtimes iss(clientKey) in jwt returns "micros/oauth-2-authorization-server" and we don't want it to pass in token function.
+            const { accessToken: jiraAccessToken, updatedClient: clientData } = await token(iss,sub);
             let allProjectKeys = [];
             let projectKeys = req.query.projectKey;
             let repoNames = req.query.repoNames;
@@ -143,8 +150,8 @@ export default function routes(app, addon) {
         // testing token
         const { status } = await getCurrentUser(accessToken);
         if (status === 200) {
-            const client = await Installations.findByPk(CLIENT_KEY)
-            const updatedClient = await client.update({ github_access_token: accessToken }, { where: { client_key: CLIENT_KEY } });
+            const client = await Installations.findByPk(addon.descriptor.clientKey)
+            const updatedClient = await client.update({ github_access_token: accessToken }, { where: { client_key: addon.descriptor.clientKey } });
             if (updatedClient) {
                 res.redirect(
                     `${updatedClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`
@@ -156,8 +163,12 @@ export default function routes(app, addon) {
     app.post("/github/events", (req, res, next) => {
         console.log(req, "Webhook url");
     });
+  
 
     app.get("/github-setup", (req, res, next) => {
-        res.redirect("https://github.com/settings/apps/jira-git-headlines/installations");
+        const reqJWT = req.headers.referer.slice(req.headers.referer.indexOf("jwt") + 4);
+        const { iss } = jwt.decode(reqJWT, "", true);
+        addon.descriptor.clientKey = iss;
+        res.redirect("https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations");
     });
 }
