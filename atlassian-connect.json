@@ -17,7 +17,7 @@
     },
     "lifecycle": {
         "installed": "jira/events/install",
-        "enabled": "jira/events//enabled",
+        "enabled": "jira/events/enabled",
         "disabled": "jira/events/disabled",
         "uninstalled": "jira/events/uninstall"
     },
