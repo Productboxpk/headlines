@@ -7,7 +7,7 @@ import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
 
 export default function routes(app, addon) {
-    app.post("jira/events/installed", async (req, res, next) => {
+    app.post("/jira/events/install", async (req, res, next) => {
         const authJWT = req.headers.authorization.slice(4);
         const {sub, iss} = jwt.decode(authJWT, "", true);
         if (iss === req.body.clientKey){
@@ -16,7 +16,7 @@ export default function routes(app, addon) {
         }
     });
 
-    app.post("jira/events/enabled", async (req, res, next) => {
+    app.post("/jira/events/enabled", async (req, res, next) => {
         console.log("I am enabled");
     });
 
@@ -38,10 +38,19 @@ export default function routes(app, addon) {
             let gitHubData = [];
             const allRepoNames = [];
 
-           await addon.on('github_token_success', async (token)  => {
-                const client = await Installations.findByPk(clientData.client_key)
-                await client.update({ github_access_token: token.accessToken }, { where: { client_key: clientData.client_key } });
-                accessToken = token;
+            let gitHubTokenrquestedBy;
+            addon.on('token_requested_by', (data) => {
+				console.log(data)
+				gitHubTokenrquestedBy = data;
+				console.log(gitHubTokenrquestedBy)
+            })
+            addon.on('github_token_success', async (token)  => {
+				console.log(gitHubTokenrquestedBy.key === clientData.client_key, 'are the same');
+				if (gitHubTokenrquestedBy.key === clientData.client_key ){
+					const client = await Installations.findByPk(gitHubTokenrquestedBy.key)
+					await client.update({ github_access_token: token.accessToken }, { where: { client_key: gitHubTokenrquestedBy.key } });
+					accessToken = token;
+				}
             });
 
             if (!_.isEmpty(clientData && clientData.github_access_token)) {
@@ -151,7 +160,7 @@ export default function routes(app, addon) {
         });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
-        const requestToken = req.query.code;
+		const requestToken = req.query.code;
         const accessToken = await authorizeApp(requestToken);
         // testing token
         const { status } = await getCurrentUser(accessToken);
@@ -164,10 +173,11 @@ export default function routes(app, addon) {
         console.log(req, "Webhook url");
     });
 
-    app.get("/github-setup", (req, res, next) => {
+    app.get("/github/setup", (req, res, next) => {
         const reqJWT = req.headers.referer.slice(req.headers.referer.indexOf("jwt") + 4);
         const { iss } = jwt.decode(reqJWT, "", true);
         addon.descriptor.clientKey = iss;
+        addon.emit('token_requested_by', {key:iss})
         res.redirect("https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations");
     });
 }
