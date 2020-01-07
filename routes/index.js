@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import { getAllProjects, getAllProjectIssues, getUserByAccountId } from "../lib/api/jira";
+import { getAllProjects, getAllProjectIssues } from "../lib/api/jira";
 import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "../lib/api/github";
 import { Installations } from "../db";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
@@ -147,7 +147,7 @@ export default function routes(app, addon) {
             const updatedClient = await client.update({ github_access_token: accessToken }, { where: { client_key: CLIENT_KEY } });
             if (updatedClient) {
                 res.redirect(
-                    `${updatedClient.data.baseUrl}/plugins/servlet/ac/jira-git-headlines/headlines`
+                    `${updatedClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`
                 );
             }
         }
