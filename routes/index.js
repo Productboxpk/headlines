@@ -2,41 +2,44 @@ import * as _ from "lodash";
 import { getAllProjects, getAllProjectIssues } from "../lib/api/jira";
 import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "../lib/api/github";
 import { Installations } from "../db";
-import { findAndUpdateElseInsert } from "../lib/models/installation";
+import { findAndUpdateElseInsert, findByUserAccountId } from "../lib/models/installation";
 import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
-
-let CLIENT_KEY = null;
-
+let userAccountId=null;
 export default function routes(app, addon) {
     app.post("/installed", async (req, res, next) => {
-        CLIENT_KEY = req.body.clientKey;
-        await findAndUpdateElseInsert(Installations, req.body);
-        return res.sendStatus(200);
+        const authJWT = req.headers.authorization.slice(4);
+        const { sub, iss } = jwt.decode(authJWT, "", true);
+        if (iss === req.body.clientKey) {
+            await findAndUpdateElseInsert(Installations, req.body, sub);
+            return res.sendStatus(200);
+        }
     });
 
     app.get("/", (req, res) => {
         res.redirect("/atlassian-connect.json");
     });
-    
-    app.get("/headlines", async (req, res, next) => {
-            const requestJwt = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true) || null;
-            const sub = requestJwt && requestJwt.sub || null;
-            const { accessToken: jiraAccessToken, updatedClient: clientData } = await token(CLIENT_KEY, sub);
-            let allProjectKeys = [];
-            let projectKeys = req.query.projectKey;
-            let repoNames = req.query.repoNames;
-            let userIssues = [];
-            let accessToken;
-            let gitHubData = [];
-            const allRepoNames = [];
 
-            if (!_.isEmpty(clientData && clientData.github_access_token)) {
-                accessToken = clientData.github_access_token;
-                const commitsDataPromises = []
-                let branchesData = [];
-                let commitsData = [];
-                const { data: orgs } = await getCurrentUserOrganizations(accessToken);
+    app.get("/headlines", async (req, res, next) => {
+        const requestJwt = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true) || null;
+        userAccountId = requestJwt && requestJwt.sub || null;
+        const clientKey = requestJwt && requestJwt.iss !== 'micros/oauth-2-authorization-server' && requestJwt.iss || null;
+        const { accessToken: jiraAccessToken, updatedClient: clientData } = await token(clientKey, userAccountId);
+        let allProjectKeys = [];
+        let projectKeys = req.query.projectKey;
+        let repoNames = req.query.repoNames;
+        let userIssues = [];
+        let accessToken;
+        let gitHubData = [];
+        const allRepoNames = [];
+
+        if (!_.isEmpty(clientData && clientData.github_access_token)) {
+            accessToken = clientData.github_access_token;
+            const commitsDataPromises = []
+            let branchesData = [];
+            let commitsData = [];
+            const { data: orgs } = await getCurrentUserOrganizations(accessToken);
+            if (orgs.length) {
                 const orgsReposDataPromises = _.map(orgs, (org) => { return get(accessToken, org.repos_url) });
                 let orgsData = await Promise.all(orgsReposDataPromises);
                 orgsData = _.first(orgsData).data;
@@ -95,47 +98,48 @@ export default function routes(app, addon) {
                 gitHubData = _.sortBy(gitHubData, commit => {
                     return commit.date;
                 });
-                gitHubData = _.reverse(gitHubData);    
+                gitHubData = _.reverse(gitHubData);
             }
+        }
 
-            projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
-            if (_.isEmpty(allProjectKeys)) {
-                    const data = await getAllProjects( jiraAccessToken,clientData.data.baseUrl);
-                    allProjectKeys = _.map(data, k => k.key);
-            }
+        projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
+        if (_.isEmpty(allProjectKeys)) {
+            const data = await getAllProjects(jiraAccessToken, clientData.data.baseUrl);
+            allProjectKeys = _.map(data, k => k.key);
+        }
 
-            if(_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
-            if (projectKeys && projectKeys.length) {
-                const projectPromises = _.map(projectKeys, (projectKey) => getAllProjectIssues(jiraAccessToken, clientData.data.baseUrl, projectKey));
-                const projectResponse = await Promise.all(projectPromises);
-                _.each(projectResponse, (project) => userIssues = [...userIssues, ...project]);
-                _.each(userIssues, (userIssue) => {
-                    userIssue.issueLink = `${clientData.data.baseUrl}/browse/${userIssue.key}`;
-                    if (userIssue.histories.length && userIssue.histories[0].from) {
-                        // const accountId =
-                        //     userIssue.histories.length && userIssue.histories[0].from;
-                        // userIssue.histories[0].avatars = await getUserByAccountId(
-                        //     jiraAccessToken,
-                        //     clientData.data.baseUrl,
-                        //     accountId
-                        // );
-                    }
-                })
-                userIssues = _.sortBy(userIssues, i => {
-                    return i.fields.updated;
-                });
-                userIssues = _.reverse(userIssues);    
-            }
-            res.render("headlines", {
-                title: "Headlines",
-                data: userIssues,
-                projects: allProjectKeys,
-                gitHubData,
-                repoNames: allRepoNames,
-                showGithubUrl: _.isEmpty(accessToken),
-                jiraAccessToken: jiraAccessToken
+        if (_.isEmpty(projectKeys)) projectKeys = allProjectKeys;
+        if (projectKeys && projectKeys.length) {
+            const projectPromises = _.map(projectKeys, (projectKey) => getAllProjectIssues(jiraAccessToken, clientData.data.baseUrl, projectKey));
+            const projectResponse = await Promise.all(projectPromises);
+            _.each(projectResponse, (project) => userIssues = [...userIssues, ...project]);
+            _.each(userIssues, (userIssue) => {
+                userIssue.issueLink = `${clientData.data.baseUrl}/browse/${userIssue.key}`;
+                if (userIssue.histories.length && userIssue.histories[0].from) {
+                    // const accountId =
+                    //     userIssue.histories.length && userIssue.histories[0].from;
+                    // userIssue.histories[0].avatars = await getUserByAccountId(
+                    //     jiraAccessToken,
+                    //     clientData.data.baseUrl,
+                    //     accountId
+                    // );
+                }
+            })
+            userIssues = _.sortBy(userIssues, i => {
+                return i.fields.updated;
             });
+            userIssues = _.reverse(userIssues);
+        }
+        res.render("headlines", {
+            title: "Headlines",
+            data: userIssues,
+            projects: allProjectKeys,
+            gitHubData,
+            repoNames: allRepoNames,
+            showGithubUrl: _.isEmpty(accessToken),
+            jiraAccessToken: jiraAccessToken
         });
+    });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
         const requestToken = req.query.code;
@@ -143,8 +147,8 @@ export default function routes(app, addon) {
         // testing token
         const { status } = await getCurrentUser(accessToken);
         if (status === 200) {
-            const client = await Installations.findByPk(CLIENT_KEY)
-            const updatedClient = await client.update({ github_access_token: accessToken }, { where: { client_key: CLIENT_KEY } });
+            await Installations.update({ github_access_token: accessToken }, { where: { account_id: userAccountId } });
+            const updatedClient = await findByUserAccountId(Installations, userAccountId);
             if (updatedClient) {
                 res.redirect(
                     `${updatedClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`
