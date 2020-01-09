@@ -38,21 +38,6 @@ export default function routes(app, addon) {
             let gitHubData = [];
             const allRepoNames = [];
 
-            let gitHubTokenrquestedBy;
-            addon.on('token_requested_by', (data) => {
-				console.log(data)
-				gitHubTokenrquestedBy = data;
-				console.log(gitHubTokenrquestedBy)
-            })
-            addon.on('github_token_success', async (token)  => {
-				console.log(gitHubTokenrquestedBy.key === clientData.client_key, 'are the same');
-				if (gitHubTokenrquestedBy.key === clientData.client_key ){
-					const client = await Installations.findByPk(gitHubTokenrquestedBy.key)
-					await client.update({ github_access_token: token.accessToken }, { where: { client_key: gitHubTokenrquestedBy.key } });
-					accessToken = token;
-				}
-            });
-
             if (!_.isEmpty(clientData && clientData.github_access_token)) {
                 accessToken = clientData.github_access_token;
                 const commitsDataPromises = []
@@ -165,7 +150,13 @@ export default function routes(app, addon) {
         // testing token
         const { status } = await getCurrentUser(accessToken);
         if (status === 200) {
-            addon.emit('github_token_success', {accessToken})
+            const client = await Installations.findByPk(CLIENT_KEY)
+            const updatedClient = await client.update({ github_access_token: accessToken }, { where: { client_key: CLIENT_KEY } });
+            if (updatedClient) {
+                res.redirect(
+                    `${updatedClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`
+                );
+            }
         }
     });
 
@@ -174,10 +165,6 @@ export default function routes(app, addon) {
     });
 
     app.get("/github/setup", (req, res, next) => {
-        const reqJWT = req.headers.referer.slice(req.headers.referer.indexOf("jwt") + 4);
-        const { iss } = jwt.decode(reqJWT, "", true);
-        addon.descriptor.clientKey = iss;
-        addon.emit('token_requested_by', {key:iss})
         res.redirect("https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations");
     });
 }
