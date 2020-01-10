@@ -1,5 +1,6 @@
 import Sequelize from "sequelize";
 import { InstallationsModel } from "../lib/models/installation";
+import { SubscriptionsModel } from "../lib/models/subscriptions";
 import express from "express";
 const app = express();
 
@@ -23,9 +24,10 @@ if (process.env.DATABASE_URL) {
     });
 }
 const Installations = InstallationsModel(sequelize, Sequelize);
+const Subscriptions = SubscriptionsModel(sequelize, Sequelize);
 
 sequelize.sync({ force: true }).then(() => {
     console.log(`Database & tables created!`);
 });
 
-export { Installations };
+export { Installations, Subscriptions };
