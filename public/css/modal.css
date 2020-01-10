@@ -1,0 +1,12 @@
+.github-modal {
+    vertical-align: top !important;
+    height: 200px;
+}
+
+.org-name-label {
+    width: auto !important;
+}
+
+#github-org-name {
+    margin-left: 20px;    
+}
