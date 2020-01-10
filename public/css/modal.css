@@ -3,10 +3,11 @@
     height: 200px;
 }
 
-.org-name-label {
+.name-label {
     width: auto !important;
 }
 
-#github-org-name {
+#github-org-name , 
+#github-repo-name {
     margin-left: 20px;    
 }
