@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import { getAllProjects, getAllProjectIssues } from "../lib/api/jira";
 import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "../lib/api/github";
-import { Installations } from "../db";
+import { Installations, Subscriptions } from "../db";
 import { findAndUpdateElseInsert, findByUserAccountId } from "../lib/models/installation";
 import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
@@ -143,26 +143,52 @@ export default function routes(app, addon) {
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
-		const requestToken = req.query.code;
+        const {installation_id, code:requestToken, setup_action} = req.query;
         const accessToken = await authorizeApp(requestToken);
         // testing token
-        const { status } = await getCurrentUser(accessToken);
+        const { status, data } = await getCurrentUserOrganizations(accessToken);
+        const orgNamesPromise = _.map(data, org => {
+            const foundOrg = Subscriptions.findOne({where: { organisation: org.login}})
+            if (foundOrg) return foundOrg;
+        });
+        const [orgNamesData] = await Promise.all(orgNamesPromise);
+
         if (status === 200) {
-            await Installations.update({ github_access_token: accessToken }, { where: { account_id: userAccountId } });
-            const updatedClient = await findByUserAccountId(Installations, userAccountId);
-            if (updatedClient) {
-                res.redirect(
-                    `${updatedClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`
-                );
+            const updated = await Subscriptions.update({ 
+                github_access_token: accessToken,
+                github_installation_id: installation_id,
+                action: setup_action 
+            }, { where: { organisation: orgNamesData.organisation } });
+
+            if(updated){
+                const updatedSubscription = await Subscriptions.findOne({where: { organisation: orgNamesData.organisation }});
+                const foundJiraClient = await Installations.findOne({where: {client_key: updatedSubscription.jira_client_key}})
+                res.redirect(`${foundJiraClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`);
             }
         }
     });
 
     app.post("/github/events", (req, res, next) => {
-        console.log(req, "Webhook url");
+        console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
     });
 
-    app.get("/github/setup", (req, res, next) => {
-        res.redirect("https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations");
+    app.post("/github/setup", async (req, res, next) => {
+        const { orgName } = req.body;
+        const requestJwt = req.headers.referer.slice(req.headers.referer.indexOf("jwt") + 4);
+        const { iss: clientKey } = jwt.decode(requestJwt, "", true);
+
+        await Subscriptions.create({
+            jira_client_key: clientKey,
+            organisation: orgName
+        }).then(() => {
+            res.status(200).json({
+                link: 'https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations'
+            });
+        }).catch(err => {
+            res.sendStatus(500).json({
+                err: err,
+                message: 'Subscription save error'
+            });
+        });
     });
 }
