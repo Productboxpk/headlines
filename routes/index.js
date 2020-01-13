@@ -143,33 +143,17 @@ export default function routes(app, addon) {
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
-        const {installation_id, code:requestToken, setup_action} = req.query;
+        console.log('Current Date', Date());
+        const { installation_id, code: requestToken, setup_action } = req.query;
         const accessToken = await authorizeApp(requestToken);
-        // testing token
-        const { status, data } = await getCurrentUserOrganizations(accessToken);
-        const orgNamesPromise = _.map(data, org => {
-            const foundOrg = Subscriptions.findOne({where: { organisation: org.login}})
-            if (foundOrg) return foundOrg;
+
+        await Subscriptions.create({
+            github_access_token: accessToken,
+            github_installation_id: installation_id,
+            action: setup_action
         });
-        const [orgNamesData] = await Promise.all(orgNamesPromise);
 
-        if (status === 200) {
-            const updated = await Subscriptions.update({ 
-                github_access_token: accessToken,
-                github_installation_id: installation_id,
-                action: setup_action 
-            }, { where: { organisation: orgNamesData.organisation } });
-
-            if(updated){
-                const updatedSubscription = await Subscriptions.findOne({where: { organisation: orgNamesData.organisation }});
-                const foundJiraClient = await Installations.findOne({where: {client_key: updatedSubscription.jira_client_key}})
-                res.redirect(`${foundJiraClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`);
-            }
-        }
-    });
-
-    app.post("/github/events", (req, res, next) => {
-        console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
+        res.redirect(`https://www.atlassian.com/`);
     });
 
     app.post("/github/setup", async (req, res, next) => {
@@ -177,18 +161,52 @@ export default function routes(app, addon) {
         const requestJwt = req.headers.referer.slice(req.headers.referer.indexOf("jwt") + 4);
         const { iss: clientKey } = jwt.decode(requestJwt, "", true);
 
-        await Subscriptions.create({
-            jira_client_key: clientKey,
-            organisation: orgName
-        }).then(() => {
-            res.status(200).json({
-                link: 'https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations'
+        await Installations.update(
+            {
+                client_key: clientKey,
+                organisation: _.trim(orgName)
+            },
+            { where: { client_key: clientKey } }
+        )
+            .then(() => {
+                res.status(200).json({
+                    link: "https://github.com/apps/jira-git-headlines"
+                });
+            })
+            .catch(err => {
+                res.sendStatus(500).json({
+                    err: err,
+                    message: "Subscription save error"
+                });
             });
-        }).catch(err => {
-            res.sendStatus(500).json({
-                err: err,
-                message: 'Subscription save error'
+    });
+
+    app.post("/github/events", async (req, res, next) => {
+        console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
+        console.log('*********************************************')
+
+        const { id: installationId, account: installedFor } = req.body.installation;
+        const { repositories } = req.body;
+
+        if (req.body.action === "created") {
+            const jiraHost = await Installations.findOne({
+                where: { organisation: installedFor.account.login }
             });
-        });
+
+            await Subscriptions.update(
+                {
+                    jira_client_key: jiraHost.client_key,
+                    github_account: installedFor,
+                    repositories
+                },
+                { where: { github_installation_id: installationId } }
+            );
+            
+            await Installations.update(
+                { github_installation_id: installationId },
+                { where: { organisation: installedFor.account.login } }
+            );
+        }
     });
 }
