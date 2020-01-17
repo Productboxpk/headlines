@@ -26,6 +26,8 @@ if (process.env.DATABASE_URL) {
 const Installations = InstallationsModel(sequelize, Sequelize);
 const Subscriptions = SubscriptionsModel(sequelize, Sequelize);
 
+Subscriptions.hasOne(Installations, { as: "github_installation_id" });
+
 sequelize.sync({ force: true }).then(() => {
     console.log(`Database & tables created!`);
 });
