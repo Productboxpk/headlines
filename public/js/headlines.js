@@ -20,24 +20,24 @@ AJS.$(window).load(function () {
         });
     })
 
-    // setInterval(function () {
-    //     let getSelectedProjectLinkUrl = ''
-    //     if (clickedProject === 'All' || projectRepos === 'All') {
-    //         getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`
-    //     } else {
-    //         getSelectedProjectLinkUrl = `headlines?projectKey=${projectKeys}&repoNames=${projectRepos}&jwt=${jiraAccessToken}`;
-    //     }
-    //     $.ajax({
-    //         type: 'GET',
-    //         url: getSelectedProjectLinkUrl,
-    //         success: function (data) {
-    //             $('.issues-container').replaceWith(`<div class="issues-container">${$(".issues-container", data).html()}</div>`);
-    //             $('.issues-container .jira-loader').addClass('hide-loader')
-    //             $('.branches-container').replaceWith(`<div class="branches-container">${$(".branches-container", data).html()}</div>`);
-    //             $('.branches-container .jira-loader').addClass('hide-loader')
-    //         }
-    //     });
-    // }, 20000)
+    setInterval(function () {
+        let getSelectedProjectLinkUrl = ''
+        if (clickedProject === 'All' || projectRepos === 'All') {
+            getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`
+        } else {
+            getSelectedProjectLinkUrl = `headlines?projectKey=${projectKeys}&repoNames=${projectRepos}&jwt=${jiraAccessToken}`;
+        }
+        $.ajax({
+            type: 'GET',
+            url: getSelectedProjectLinkUrl,
+            success: function (data) {
+                $('.issues-container').replaceWith(`<div class="issues-container">${$(".issues-container", data).html()}</div>`);
+                $('.issues-container .jira-loader').addClass('hide-loader')
+                $('.branches-container').replaceWith(`<div class="branches-container">${$(".branches-container", data).html()}</div>`);
+                $('.branches-container .jira-loader').addClass('hide-loader')
+            }
+        });
+    }, 20000)
     $('.project-link').on('click', function (e) {
         $('.issues-container .jira-loader').removeClass('hide-loader')
         clickedProject = $(this).attr('name');
