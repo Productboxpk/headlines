@@ -20,6 +20,53 @@ export default function routes(app, addon) {
         res.redirect("/atlassian-connect.json");
     });
 
+    app.get("/atlassian-connect.json", (req, res, next) => {
+        const isHttps = req.secure || req.header("x-forwarded-proto") === "https";
+
+        return res.status(200).json({
+            apiMigrations: {
+                gdpr: true
+            },
+            name: "Headlines for Jira",
+            description:
+                "This plugin shows the recent updated tickets and branches of all projects a user is working on",
+            key: "headlines-jira",
+            baseUrl: `${isHttps ? "https" : "http"}://${req.get("host")}`,
+            lifecycle: {
+                installed: "/jira/events/install",
+                uninstalled: "/jira/events/uninstall",
+                enabled: "/jira/events/enabled",
+                disabled: "/jira/events/disabled"
+            },
+            vendor: {
+                name: "Productbox",
+                url: "https://www.productbox.dev"
+            },
+            authentication: {
+                type: "jwt"
+            },
+            scopes: ["READ", "ACT_AS_USER"],
+            apiVersion: 1,
+            modules: {
+                generalPages: [
+                    {
+                        key: "headlines",
+                        location: "system.top.navigation.bar",
+                        name: {
+                            value: "Headlines"
+                        },
+                        url: "/headlines",
+                        conditions: [
+                            {
+                                condition: "user_is_logged_in"
+                            }
+                        ]
+                    }
+                ]
+            }
+        });
+    });
+
     app.get("/headlines", async (req, res, next) => {
         const requestJwt = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true) || null;
         userAccountId = requestJwt && requestJwt.sub || null;
