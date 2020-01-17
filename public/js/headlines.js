@@ -4,6 +4,22 @@ AJS.$(window).load(function () {
     let projectKeys = [];
     let clickedRepo = '';
     let projectRepos = [];
+
+    AJS.$("#github-data").on('submit', function(e){
+        const orgName = AJS.$("#github-org-name").val();
+        AJS.$.ajax({
+            type: 'POST',
+            url: 'github/setup',
+            data: {orgName},
+            dataType: "json",
+            success: function (data) {
+                AJS.$("a[rel='modal:close']").trigger("click");
+                const { link } = data;
+                window.open('https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations', '_blank');
+            }
+        });
+    })
+
     setInterval(function () {
         let getSelectedProjectLinkUrl = ''
         if (clickedProject === 'All' || projectRepos === 'All') {

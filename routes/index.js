@@ -1,23 +1,70 @@
 import * as _ from "lodash";
-import { getAllProjects, getAllProjectIssues } from "../lib/api/jira";
-import { authorizeApp, getCurrentUser, getCurrentUserOrganizations, get } from "../lib/api/github";
-import { Installations } from "../db";
-import { findAndUpdateElseInsert, findByUserAccountId } from "../lib/models/installation";
-import { token } from "../lib/jira";
 import * as jwt from "atlassian-jwt";
-let userAccountId=null;
+import { Installations, Subscriptions } from "../db";
+import { token } from "../lib/jira";
+import { authorizeApp, getCurrentUserOrganizations, get } from "../lib/api/github";
+import { getAllProjects, getAllProjectIssues } from "../lib/api/jira";
+import { findAndUpdateElseInsert } from "../lib/models/installation";
+
+let userAccountId = null;
+
 export default function routes(app, addon) {
-    app.post("/installed", async (req, res, next) => {
+    app.post("/jira/events/install", async (req, res, next) => {
         const authJWT = req.headers.authorization.slice(4);
         const { sub, iss } = jwt.decode(authJWT, "", true);
-        if (iss === req.body.clientKey) {
-            await findAndUpdateElseInsert(Installations, req.body, sub);
-            return res.sendStatus(200);
-        }
+        await findAndUpdateElseInsert(Installations, req.body, sub);
+        return res.sendStatus(200);
     });
 
     app.get("/", (req, res) => {
         res.redirect("/atlassian-connect.json");
+    });
+
+    app.get("/atlassian-connect.json", (req, res, next) => {
+        const isHttps = req.secure || req.header("x-forwarded-proto") === "https";
+
+        return res.status(200).json({
+            apiMigrations: {
+                gdpr: true
+            },
+            name: "Headlines for Jira",
+            description:
+                "This plugin shows the recent updated tickets and branches of all projects a user is working on",
+            key: "headlines-jira",
+            baseUrl: `${isHttps ? "https" : "http"}://${req.get("host")}`,
+            lifecycle: {
+                installed: "/jira/events/install",
+                uninstalled: "/jira/events/uninstall",
+                enabled: "/jira/events/enabled",
+                disabled: "/jira/events/disabled"
+            },
+            vendor: {
+                name: "Productbox",
+                url: "https://www.productbox.dev"
+            },
+            authentication: {
+                type: "jwt"
+            },
+            scopes: ["READ", "ACT_AS_USER"],
+            apiVersion: 1,
+            modules: {
+                generalPages: [
+                    {
+                        key: "headlines",
+                        location: "system.top.navigation.bar",
+                        name: {
+                            value: "Headlines"
+                        },
+                        url: "/headlines",
+                        conditions: [
+                            {
+                                condition: "user_is_logged_in"
+                            }
+                        ]
+                    }
+                ]
+            }
+        });
     });
 
     app.get("/headlines", async (req, res, next) => {
@@ -29,18 +76,23 @@ export default function routes(app, addon) {
         let projectKeys = req.query.projectKey;
         let repoNames = req.query.repoNames;
         let userIssues = [];
-        let accessToken;
+        let githubAccessToken;
         let gitHubData = [];
         const allRepoNames = [];
 
-        if (!_.isEmpty(clientData && clientData.github_access_token)) {
-            accessToken = clientData.github_access_token;
+        const githubDataFromDB = await Subscriptions.findOne({
+            where: { github_installation_id: clientData.github_installation_id }
+        });
+
+        if (!_.isEmpty(githubDataFromDB && githubDataFromDB.github_access_token)) {
+            githubAccessToken = githubDataFromDB && githubDataFromDB.github_access_token; 
+            githubAccessToken = githubDataFromDB.github_access_token;
             const commitsDataPromises = []
             let branchesData = [];
             let commitsData = [];
-            const { data: orgs } = await getCurrentUserOrganizations(accessToken);
+            const { data: orgs } = await getCurrentUserOrganizations(githubAccessToken);
             if (orgs.length) {
-                const orgsReposDataPromises = _.map(orgs, (org) => { return get(accessToken, org.repos_url) });
+                const orgsReposDataPromises = _.map(orgs, (org) => { return get(githubAccessToken, org.repos_url) });
                 let orgsData = await Promise.all(orgsReposDataPromises);
                 orgsData = _.first(orgsData).data;
                 const branchsLink = [];
@@ -56,13 +108,13 @@ export default function routes(app, addon) {
                         commitsLink.push(orgData.commits_url.slice(0, -6));
                     }
                 })
-                const branchDataPromises = _.map(branchsLink, (branchLink) => get(accessToken, branchLink))
+                const branchDataPromises = _.map(branchsLink, (branchLink) => get(githubAccessToken, branchLink))
                 let branchesDataResponse = await Promise.all(branchDataPromises);
                 _.each(branchesDataResponse, (branchData) => branchesData = [...branchesData, ...branchData.data]);
                 _.each(commitsLink, (commitLink) => {
                     _.each(branchesData, (branchData) => {
                         if (branchData.commit.url.includes(commitLink))
-                            commitsDataPromises.push(get(accessToken, commitLink + "?sha=" + branchData.commit.sha, branchData.name))
+                            commitsDataPromises.push(get(githubAccessToken, commitLink + "?sha=" + branchData.commit.sha, branchData.name))
                     })
                 })
                 const commitsDataResponse = await Promise.all(commitsDataPromises);
@@ -136,32 +188,131 @@ export default function routes(app, addon) {
             projects: allProjectKeys,
             gitHubData,
             repoNames: allRepoNames,
-            showGithubUrl: _.isEmpty(accessToken),
+            showGithubUrl: _.isEmpty(githubAccessToken),
             jiraAccessToken: jiraAccessToken
         });
     });
 
     app.get("/github/oauth/redirect", async (req, res, next) => {
-        const requestToken = req.query.code;
+        const { installation_id, code: requestToken, setup_action } = req.query;
         const accessToken = await authorizeApp(requestToken);
-        // testing token
-        const { status } = await getCurrentUser(accessToken);
-        if (status === 200) {
-            await Installations.update({ github_access_token: accessToken }, { where: { account_id: userAccountId } });
-            const updatedClient = await findByUserAccountId(Installations, userAccountId);
-            if (updatedClient) {
-                res.redirect(
-                    `${updatedClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`
-                );
-            }
+        const foundSubscription = await Subscriptions.findOne({
+            where: { github_installation_id: installation_id }
+        });
+        if (!foundSubscription) {
+            await Subscriptions.create({
+                github_access_token: accessToken,
+                github_installation_id: installation_id,
+                action: setup_action
+            });
+        } else {
+            await Subscriptions.update({
+                github_access_token: accessToken,
+                action: setup_action      
+            }, {where: {github_installation_id: installation_id} })
         }
+        const foundClient = await Installations.findOne({
+            hwere: { github_installation_id: installation_id }
+        });
+        res.redirect(`${foundClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`);
     });
 
-    app.post("/github/events", (req, res, next) => {
-        console.log(req, "Webhook url");
+    app.post("/github/setup", async (req, res, next) => {
+        const { orgName } = req.body;
+        const requestJwt = req.headers.referer.slice(req.headers.referer.indexOf("jwt") + 4);
+        const { iss: clientKey } = jwt.decode(requestJwt, "", true);
+
+        await Installations.update(
+            {
+                client_key: clientKey,
+                organisation: _.trim(orgName)
+            },
+            { where: { client_key: clientKey } }
+        )
+            .then(() => {
+                res.status(200).json({
+                    link: "https://github.com/apps/jira-git-headlines"
+                });
+            })
+            .catch(err => {
+                res.sendStatus(500).json({
+                    err: err,
+                    message: "Subscription save error"
+                });
+            });
     });
 
-    app.get("/github-setup", (req, res, next) => {
-        res.redirect("https://github.com/settings/apps/jira-git-headlines/installations");
+    app.post("/github/events", async (req, res, next) => {
+        // console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        // console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
+        // console.log("*********************************************");
+        let { repositories, action } = req.body;
+        const { id: installationId, account: installedFor } = req.body.installation;
+
+        if (action === "created") {
+            const jiraHost = await Installations.findOne({
+                where: { organisation: installedFor.login }
+            });
+            
+            const foundSubscriptionWithId = await Subscriptions.findOne({
+                where: { github_installation_id: installationId }
+            });
+            if (foundSubscriptionWithId) {
+                await Subscriptions.update(
+                    {
+                        organisation: installedFor.login,
+                        jira_client_key: jiraHost.client_key,
+                        github_account: installedFor,
+                        repositories: repositories
+                    },
+                    { where: { github_installation_id: installationId } }
+                );
+            } else {
+                await Subscriptions.create({
+                    organisation: installedFor.login,
+                    jira_client_key: jiraHost.client_key,
+                    github_installation_id: installationId,
+                    github_account: installedFor,
+                    repositories: repositories
+                });
+            }
+            await Installations.update(
+                { github_installation_id: installationId },
+                { where: { organisation: installedFor.login } }
+            );
+        }
+
+        if (action === "removed") {
+            const { repositories_removed } = req.body;
+            console.log(repositories_removed, "repo removed");
+            const foundInstallation = await Subscriptions.findOne({
+                where: { github_installation_id: installationId }
+            });
+            console.log("+++++++++++++++++++++++++++++++++++++++++")
+            console.log(foundInstallation, "as found installation");
+            console.log("-----------------------------------------")
+        }
+
+        if (action === "added") {
+            const { repositories_added } = req.body;
+            console.log(repositories_added, "repo added new repo");
+            const foundInstallation = await Subscriptions.findOne({
+                where: { github_installation_id: installationId }
+            });
+            console.log("+++++++++++++++++++++++++++++++++++++++++")
+            console.log(foundInstallation, "as found installation in added ");
+            console.log("-----------------------------------------")
+        }
+        if (action === "deleted") {
+            await Subscriptions.destroy({
+                where: { github_installation_id: installationId }
+            });
+            await Installations.update(
+                {
+                    github_installation_id: null
+                },
+                { where: { github_installation_id: installationId } }
+            );
+        }
     });
 }

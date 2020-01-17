@@ -11,7 +11,7 @@
 		<section class="aui-page-panel-item">
 			<div class="aui-group">
 				<div class="aui-item">
-					<div class="aui-toolbar" role="toolbar">
+				<div class="aui-toolbar" role="toolbar">
 						<div class="aui-toolbar-inner">
 							<button disabled class="aui-button total-issues">Total Issues:
 								<span class="aui-badge">{{data.length}}</span>
@@ -46,9 +46,11 @@
 							{{/unless}}
 
 							{{#if showGithubUrl}}
-							{{!-- <a href="/github-setup" target="_blank">Click to Setup GitHub</a> --}}
-							<a href="https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations"
-								target="_blank">Click to Setup GitHub</a>
+							<a href="#open-setup-modal" class="aui-button" rel="modal:open">Click to Setup GitHub</a>
+							{{!-- <button class="aui-button" id="github-modal-btn">Click to Setup GitHub</button> --}}
+							{{!-- <a href="/github/setup" target="_blank">Click to Setup GitHub</a> --}}
+							{{!-- <a href="https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations"
+								target="_blank">Click to Setup GitHub</a> --}}
 							{{/if}}
 
 							{{!-- <button class="aui-button" id="maximize-display">
@@ -56,6 +58,22 @@
 							</button> --}}
 						</div>
 					</div>
+					
+					<div id="open-setup-modal" class="modal github-modal">
+						<form class="aui" id="github-data">
+							<div class="field-group">
+								<label class="name-label" for="org-name-input">GitHub Organization name<span class="aui-icon icon-required"></span></label>
+								<input id="github-org-name" name="org-name-input" type="text" class="text">
+							</div>
+							<div>
+								<button class="aui-button" type="submit">Submit</button>
+								<a class="aui-button" href="#" rel="modal:close">Close</a>
+							</div>
+						</form>
+						
+					</div>
+					<!-- Link to open the modal -->
+					
 					<div class="wrapping-container">
 						<div class="issues-container">
 							<div class="jira-loader loader hide-loader">
@@ -64,7 +82,7 @@
 										stroke-miterlimit="10" />
 								</svg>
 							</div>
-							
+
 							{{#each data}}
 							<div class="card">
 								<h4 class="issue-key">
