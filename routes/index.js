@@ -98,20 +98,20 @@ export default function routes(app, addon) {
                 const branchsLink = [];
                 const commitsLink = [];
                 _.each(orgsData, (orgData) => {
-                    allRepoNames.push(orgData.name);
+                    allRepoNames.push(orgData.data.name);
                     if (_.isEmpty(repoNames)) {
-                        console.log('here in first if', orgData)
-                        console.log('here in first if', orgData.branches_url, 'with branches url')
-                        branchsLink.push(orgData.branches_url.slice(0, -9));
-                        commitsLink.push(orgData.commits_url.slice(0, -6));
+                        console.log('here in first if', orgData.data)
+                        console.log('here in first if', orgData.data.branches_url, 'with branches url')
+                        branchsLink.push(orgData.data.branches_url.slice(0, -9));
+                        commitsLink.push(orgData.data.commits_url.slice(0, -6));
                     }
-                    if (_.includes(repoNames, orgData.name)) {
-                        console.log('here in second if', orgData)
-                        console.log('here in second if', orgData.branches_url, 'with branches url')
-                        branchsLink.push(orgData.branches_url.slice(0, -9));
-                        commitsLink.push(orgData.commits_url.slice(0, -6));
+                    if (_.includes(repoNames, orgData.data.name)) {
+                        console.log('here in second if', orgData.data)
+                        console.log('here in second if', orgData.data.branches_url, 'with branches url')
+                        branchsLink.push(orgData.data.branches_url.slice(0, -9));
+                        commitsLink.push(orgData.data.commits_url.slice(0, -6));
                     }
-                })
+                });
                 const branchDataPromises = _.map(branchsLink, (branchLink) => get(githubAccessToken, branchLink))
                 let branchesDataResponse = await Promise.all(branchDataPromises);
                 _.each(branchesDataResponse, (branchData) => branchesData = [...branchesData, ...branchData.data]);
