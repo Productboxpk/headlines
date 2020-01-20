@@ -93,7 +93,7 @@ export default function routes(app, addon) {
             console.log(allowedRepos);
             
             if (allowedRepos) {
-                const orgsReposDataPromises = _.map(allowedRepos, (org) => { return get(githubAccessToken, `https://api.github.com/repos/${org.full_name}`) }); // full_name is linke /organization/repositories
+                const orgsReposDataPromises = _.map(allowedRepos, (org) => { return get(githubAccessToken, `https://api.github.com/repos/${org.full_name}`) }); // full_name is like /organization/repositories
                 let orgsData = await Promise.all(orgsReposDataPromises);
                 console.log(orgsData, 'this is orgs data')
                 orgsData = _.first(orgsData).data;
@@ -102,10 +102,14 @@ export default function routes(app, addon) {
                 _.each(orgsData, (orgData) => {
                     allRepoNames.push(orgData.name);
                     if (_.isEmpty(repoNames)) {
+                        console.log('here in first if', orgData)
+                        console.log('here in first if', orgData.branches_url, 'with branches url')
                         branchsLink.push(orgData.branches_url.slice(0, -9));
                         commitsLink.push(orgData.commits_url.slice(0, -6));
                     }
                     if (_.includes(repoNames, orgData.name)) {
+                        console.log('here in second if', orgData)
+                        console.log('here in second if', orgData.branches_url, 'with branches url')
                         branchsLink.push(orgData.branches_url.slice(0, -9));
                         commitsLink.push(orgData.commits_url.slice(0, -6));
                     }
