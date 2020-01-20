@@ -244,9 +244,9 @@ export default function routes(app, addon) {
     });
 
     app.post("/github/events", async (req, res, next) => {
-        // console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        // console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
-        // console.log("*********************************************");
+        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
+        console.log("*********************************************");
         let { repositories, action } = req.body;
         const { id: installationId, account: installedFor } = req.body.installation;
 
@@ -304,10 +304,10 @@ export default function routes(app, addon) {
                     { repositories: oldRepos },
                     { where: { github_installation_id: installationId } }
                 );
+                console.log("+++++++++++++++++++++++++++++++++++++++++");
+                console.log(oldRepos, "inserting this in database");
+                console.log("-----------------------------------------");
             }
-            console.log("+++++++++++++++++++++++++++++++++++++++++")
-            console.log(oldRepos, "inserting this in database");
-            console.log("-----------------------------------------")
         }
 
         if (action === "added") {
