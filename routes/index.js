@@ -28,8 +28,7 @@ export default function routes(app, addon) {
                 gdpr: true
             },
             name: "Headlines for Jira",
-            description:
-                "This plugin shows the recent updated tickets and branches of all projects a user is working on",
+            description: "This plugin shows the recent updated tickets and branches of all projects a user is working on",
             key: "headlines-jira",
             baseUrl: `${isHttps ? "https" : "http"}://${req.get("host")}`,
             lifecycle: {
@@ -80,9 +79,8 @@ export default function routes(app, addon) {
         let gitHubData = [];
         const allRepoNames = [];
 
-        const githubDataFromDB = await Subscriptions.findOne({
-            where: { github_installation_id: clientData.github_installation_id }
-        });
+        let githubDataFromDB;
+        if(clientData && clientData.github_installation_id) githubDataFromDB = await Subscriptions.findOne({ where: { github_installation_id: clientData.github_installation_id } });
 
         if (!_.isEmpty(githubDataFromDB && githubDataFromDB.github_access_token)) {
             githubAccessToken = githubDataFromDB && githubDataFromDB.github_access_token; 
