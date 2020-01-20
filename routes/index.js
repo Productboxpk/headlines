@@ -289,8 +289,24 @@ export default function routes(app, addon) {
             const foundInstallation = await Subscriptions.findOne({
                 where: { github_installation_id: installationId }
             });
+            let oldRepos = foundInstallation.repositories;
+            const repoIndex = _.findIndex(oldRepos, (oldRepo) => {
+                let found = false;
+                    _.map(repositories_removed, (removeRepo) => {
+                       found = oldRepo.id === removeRepo.id;
+                       return;
+                    });
+                return found;
+            })
+            if (repoIndex) {
+                oldRepos = oldRepos.splice(repoIndex);
+                await Subscriptions.update(
+                    { repositories: oldRepos },
+                    { where: { github_installation_id: installationId } }
+                );
+            }
             console.log("+++++++++++++++++++++++++++++++++++++++++")
-            console.log(foundInstallation, "as found installation");
+            console.log(oldRepos, "inserting this in database");
             console.log("-----------------------------------------")
         }
 
@@ -300,25 +316,21 @@ export default function routes(app, addon) {
                 where: { github_installation_id: installationId }
             });
             const oldRepos = foundInstallation.repositories;
-            const alreadExists = _.find(oldRepos, (oldRepo) => {
-                let found = false;
-                    _.map(repositories_added, (newRepo) => {
-                       found = oldRepo.id === newRepo.id;
-                        return
-                    })  
+            const alreadExists = _.find(oldRepos, oldRepo => {
+                let found;
+                _.map(repositories_added, newRepo => {
+                    found = oldRepo.id === newRepo.id;
+                    return;
+                });
                 return found;
-            })
+            });
             if (!alreadExists) {
                 const reposUpdated = [...oldRepos, ...repositories_added];
                 await Subscriptions.update(
                     { repositories: reposUpdated },
                     { where: { github_installation_id: installationId } }
                 );
-                console.log("+++++++++++++++++++++++++++++++++++++++++");
-                console.log(reposUpdated, "as found installation in added ");
-                console.log("-----------------------------------------");
             }
-            
         }
 
         if (action === "deleted") {
