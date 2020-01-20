@@ -248,7 +248,7 @@ export default function routes(app, addon) {
         console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
         console.log("*********************************************");
         let { repositories, action } = req.body;
-        const { id: installationId, account: installedFor } = req.body.installation;
+        const { id: installationId, account: installedFor, target_type, repository_selection } = req.body.installation;
 
         if (action === "created") {
             const jiraHost = await Installations.findOne({
@@ -264,7 +264,9 @@ export default function routes(app, addon) {
                         organisation: installedFor.login,
                         jira_client_key: jiraHost.client_key,
                         github_account: installedFor,
-                        repositories: repositories
+                        repositories: repositories,
+                        repository_selection,
+                        account_type: target_type
                     },
                     { where: { github_installation_id: installationId } }
                 );
@@ -274,7 +276,9 @@ export default function routes(app, addon) {
                     jira_client_key: jiraHost.client_key,
                     github_installation_id: installationId,
                     github_account: installedFor,
-                    repositories: repositories
+                    repositories: repositories,
+                    repository_selection,
+                    account_type: target_type
                 });
             }
             await Installations.update(
@@ -298,7 +302,7 @@ export default function routes(app, addon) {
                     });
                 return found;
             })
-            if (repoIndex) {
+            if (repoIndex > -1) {
                 oldRepos = oldRepos.splice(repoIndex);
                 await Subscriptions.update(
                     { repositories: oldRepos },
