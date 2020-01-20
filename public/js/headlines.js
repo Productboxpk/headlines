@@ -15,7 +15,7 @@ AJS.$(window).load(function () {
             success: function (data) {
                 AJS.$("a[rel='modal:close']").trigger("click");
                 const { link } = data;
-                window.open('https://github.com/organizations/Productboxpk/settings/apps/jira-git-headlines/installations', '_blank');
+                window.open(link, '_blank');
             }
         });
     })
