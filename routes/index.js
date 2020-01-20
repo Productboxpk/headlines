@@ -154,6 +154,7 @@ export default function routes(app, addon) {
 
         projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
         if (_.isEmpty(allProjectKeys)) {
+            console.log('is this empty !!!!', clientData.data.baseUrl)
             const data = await getAllProjects(jiraAccessToken, clientData.data.baseUrl);
             allProjectKeys = _.map(data, k => k.key);
         }
