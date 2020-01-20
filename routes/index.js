@@ -88,9 +88,12 @@ export default function routes(app, addon) {
             const commitsDataPromises = []
             let branchesData = [];
             let commitsData = [];
-            const { data: orgs } = await getCurrentUserOrganizations(githubAccessToken);
-            if (orgs.length) {
-                const orgsReposDataPromises = _.map(orgs, (org) => { return get(githubAccessToken, org.repos_url) });
+            
+            const allowedRepos = githubDataFromDB.repositories;
+            console.log(allowedRepos);
+            
+            if (allowedRepos) {
+                const orgsReposDataPromises = _.map(allowedRepos, (org) => { return get(githubAccessToken, `https://api.github.com/orgs/${org.full_name}`) }); // full_name is linke /organization/repositories
                 let orgsData = await Promise.all(orgsReposDataPromises);
                 orgsData = _.first(orgsData).data;
                 const branchsLink = [];
