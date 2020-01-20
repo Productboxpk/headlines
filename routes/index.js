@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import * as jwt from "atlassian-jwt";
 import { Installations, Subscriptions } from "../db";
 import { token } from "../lib/jira";
-import { authorizeApp, getCurrentUserOrganizations, get } from "../lib/api/github";
+import { authorizeApp, get } from "../lib/api/github";
 import { getAllProjects, getAllProjectIssues } from "../lib/api/jira";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
 
@@ -300,12 +300,16 @@ export default function routes(app, addon) {
 
         if (action === "added") {
             const { repositories_added } = req.body;
-            console.log(repositories_added, "repo added new repo");
             const foundInstallation = await Subscriptions.findOne({
                 where: { github_installation_id: installationId }
             });
+            const repos = foundInstallation.repositories;
+            const reposUpdated = [...repos, ...repositories_added]
+            await Subscriptions.update({repositories: reposUpdated},
+                {where: { github_installation_id: installationId }
+            });
             console.log("+++++++++++++++++++++++++++++++++++++++++")
-            console.log(foundInstallation, "as found installation in added ");
+            console.log(reposUpdated, "as found installation in added ");
             console.log("-----------------------------------------")
         }
         if (action === "deleted") {
