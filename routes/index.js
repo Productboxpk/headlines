@@ -293,27 +293,31 @@ export default function routes(app, addon) {
                 where: { github_installation_id: installationId }
             });
             let oldRepos = foundInstallation.repositories;
-            const removeIds = _.map(repositories_removed, (removeRepo) => {
-                return removeRepo.id;
+            const oldRepoIds = _.map(oldRepos, "id");
+
+            _.map(repositories_removed, r => {
+                const foundIndex = oldRepoIds.indexOf(r.id);
+                if (foundIndex > -1) {
+                    console.log(foundIndex, 'foundIndex');
+                    console.log(oldRepos[foundIndex], 'oldRepos[foundIndex]');
+                    oldRepos.splice(foundIndex, 1);
+                    console.log(oldRepos, 'oldRepos after splicing');
+                }
             });
-            const repoIndex = _.findIndex(oldRepos, (oldRepo) => {
-                let found = false;
-                    
-                return found;
-            })
-            if (repoIndex > -1) {
-                oldRepos = oldRepos.slice(repoIndex);
-                await Subscriptions.update({ 
-                        repositories: oldRepos,
-                        repository_selection,
-                        account_type: target_type
-                    },
-                    { where: { github_installation_id: installationId } }
-                );
-                console.log("+++++++++++++++++++++++++++++++++++++++++");
-                console.log(oldRepos, "inserting this in database");
-                console.log("-----------------------------------------");
-            }
+
+            console.log("+++++++++++++++++++++++++++++++++++++++++");
+            console.log(oldRepos, "inserting this in database");
+            console.log("-----------------------------------------");
+            
+            await Subscriptions.update(
+                {
+                    repositories: oldRepos,
+                    repository_selection,
+                    account_type: target_type
+                },
+                { where: { github_installation_id: installationId } }
+            );
+           
         }
 
         if (action === "added") {
