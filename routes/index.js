@@ -155,7 +155,6 @@ export default function routes(app, addon) {
 
         projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
         if (_.isEmpty(allProjectKeys)) {
-            console.log('is this empty !!!!', clientData.data.baseUrl)
             const data = await getAllProjects(jiraAccessToken, clientData.data.baseUrl);
             allProjectKeys = _.map(data, k => k.key);
         }
@@ -243,9 +242,9 @@ export default function routes(app, addon) {
     });
 
     app.post("/github/events", async (req, res, next) => {
-        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
-        console.log("*********************************************");
+        // console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        // console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
+        // console.log("*********************************************");
         let { repositories, action } = req.body;
         const { id: installationId, account: installedFor, target_type, repository_selection } = req.body.installation;
 
@@ -288,7 +287,6 @@ export default function routes(app, addon) {
 
         if (action === "removed") {
             const { repositories_removed } = req.body;
-            console.log(repositories_removed, "repo removed");
             const foundInstallation = await Subscriptions.findOne({
                 where: { github_installation_id: installationId }
             });
@@ -297,18 +295,8 @@ export default function routes(app, addon) {
 
             _.map(repositories_removed, r => {
                 const foundIndex = oldRepoIds.indexOf(r.id);
-                if (foundIndex > -1) {
-                    console.log(foundIndex, 'foundIndex');
-                    console.log(oldRepos[foundIndex], 'oldRepos[foundIndex]');
-                    oldRepos.splice(foundIndex, 1);
-                    console.log(oldRepos, 'oldRepos after splicing');
-                }
+                if (foundIndex > -1) oldRepos.splice(foundIndex, 1);
             });
-
-            console.log("+++++++++++++++++++++++++++++++++++++++++");
-            console.log(oldRepos, "inserting this in database");
-            console.log("-----------------------------------------");
-            
             await Subscriptions.update(
                 {
                     repositories: oldRepos,
