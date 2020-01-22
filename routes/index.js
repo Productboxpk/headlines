@@ -212,7 +212,7 @@ export default function routes(app, addon) {
             }, {where: {github_installation_id: installation_id} })
         }
         const foundClient = await Installations.findOne({
-            hwere: { github_installation_id: installation_id }
+            where: { github_installation_id: installation_id }
         });
         res.redirect(`${foundClient.data.baseUrl}/plugins/servlet/ac/headlines-jira/headlines`);
     });
