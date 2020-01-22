@@ -1,110 +1,134 @@
-AJS.$(window).load(function () {
+AJS.$(window).load(function() {
     let jiraAccessToken = AJS.$('meta[name="jiraAccessToken"]').attr("content");
-    let clickedProject = '';
+    let clickedProject = "";
     let projectKeys = [];
-    let clickedRepo = '';
+    let clickedRepo = "";
     let projectRepos = [];
 
-    AJS.$("#github-data").on('submit', function(e){
+    AJS.$("#look-org").on("click", function(e) {
         const orgName = AJS.$("#github-org-name").val();
         AJS.$.ajax({
-            type: 'POST',
-            url: 'github/setup',
-            data: {orgName},
-            dataType: "json",
-            success: function (data) {
-                AJS.$("a[rel='modal:close']").trigger("click");
-                const { link } = data;
-                window.open(link, '_blank');
+            type: "GET",
+            url: `https://api.github.com/orgs/${orgName}`,
+            success: function(data) {
+                AJS.$("#confirm-org-logo").attr("src", data.avatar_url);
+                AJS.$("#confirm-org-description").html(data.description);
+            },
+            error: function(error) {
+                console.log(error, "err data");
             }
         });
-    })
+    });
 
-    setInterval(function () {
-        let getSelectedProjectLinkUrl = ''
-        if (clickedProject === 'All' || projectRepos === 'All') {
-            getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`
+    AJS.$("#github-data").on("submit", function(e) {
+        const orgName = AJS.$("#github-org-name").val();
+        if (!orgName.length);
+        else {
+            AJS.$.ajax({
+                type: "POST",
+                url: "github/setup",
+                data: { orgName },
+                dataType: "json",
+                success: function(data) {
+                    AJS.$("a[rel='modal:close']").trigger("click");
+                    const { link } = data;
+                    window.open(link, "_blank");
+                }
+            });
+        }
+    });
+
+    setInterval(function() {
+        let getSelectedProjectLinkUrl = "";
+        if (clickedProject === "All" || projectRepos === "All") {
+            getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`;
         } else {
             getSelectedProjectLinkUrl = `headlines?projectKey=${projectKeys}&repoNames=${projectRepos}&jwt=${jiraAccessToken}`;
         }
         $.ajax({
-            type: 'GET',
+            type: "GET",
             url: getSelectedProjectLinkUrl,
-            success: function (data) {
-                $('.issues-container').replaceWith(`<div class="issues-container">${$(".issues-container", data).html()}</div>`);
-                $('.issues-container .jira-loader').addClass('hide-loader')
-                $('.branches-container').replaceWith(`<div class="branches-container">${$(".branches-container", data).html()}</div>`);
-                $('.branches-container .jira-loader').addClass('hide-loader')
+            success: function(data) {
+                $(".issues-container").replaceWith(
+                    `<div class="issues-container">${$(".issues-container", data).html()}</div>`
+                );
+                $(".issues-container .jira-loader").addClass("hide-loader");
+                $(".branches-container").replaceWith(
+                    `<div class="branches-container">${$(".branches-container", data).html()}</div>`
+                );
+                $(".branches-container .jira-loader").addClass("hide-loader");
             }
         });
-    }, 20000)
-    $('.project-link').on('click', function (e) {
-        $('.issues-container .jira-loader').removeClass('hide-loader')
-        clickedProject = $(this).attr('name');
+    }, 20000);
+    $(".project-link").on("click", function(e) {
+        $(".issues-container .jira-loader").removeClass("hide-loader");
+        clickedProject = $(this).attr("name");
         let getSelectedProjectLinkUrl = null;
-        const allCheckedProjects = $('#jira-projects .project-link');
-        if (clickedProject === 'All') {
+        const allCheckedProjects = $("#jira-projects .project-link");
+        if (clickedProject === "All") {
             for (let index = 0; index < allCheckedProjects.length; index++) {
-                if ($(allCheckedProjects[index]).attr('name') !== 'All') {
-                    $(allCheckedProjects[index]).prop('checked', false)
+                if ($(allCheckedProjects[index]).attr("name") !== "All") {
+                    $(allCheckedProjects[index]).prop("checked", false);
                 }
             }
-            getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`
+            getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`;
         }
-        if (e.target.checked && clickedProject !== 'All') {
+        if (e.target.checked && clickedProject !== "All") {
             for (let index = 0; index < allCheckedProjects.length; index++) {
-                if ($(allCheckedProjects[index]).attr('name') === 'All') {
-                    $(allCheckedProjects[index]).prop('checked', false)
+                if ($(allCheckedProjects[index]).attr("name") === "All") {
+                    $(allCheckedProjects[index]).prop("checked", false);
                 }
             }
             projectKeys.push(clickedProject);
             getSelectedProjectLinkUrl = `headlines?projectKey=${projectKeys}&repoNames=${projectRepos}&jwt=${jiraAccessToken}`;
         }
-        if (!e.target.checked && clickedProject !== 'All') {
+        if (!e.target.checked && clickedProject !== "All") {
             for (let index = 0; index < allCheckedProjects.length; index++) {
-                if ($(allCheckedProjects[index]).attr('name') === 'All') {
-                    $(allCheckedProjects[index]).prop('checked', false)
+                if ($(allCheckedProjects[index]).attr("name") === "All") {
+                    $(allCheckedProjects[index]).prop("checked", false);
                 }
             }
             const removeIndex = projectKeys.indexOf(clickedProject);
             projectKeys.splice(removeIndex, 1);
         }
         $.ajax({
-            type: 'GET',
+            type: "GET",
             url: getSelectedProjectLinkUrl,
-            success: function (data) {
-                $('.issues-container').replaceWith(`<div class="issues-container">${$(".issues-container", data).html()}</div>`);
-                $('.issues-container .jira-loader').addClass('hide-loader')
-                $('.jira-dropdown').click();
+            success: function(data) {
+                $(".issues-container").replaceWith(
+                    `<div class="issues-container">${$(".issues-container", data).html()}</div>`
+                );
+                $(".issues-container .jira-loader").addClass("hide-loader");
+                $(".jira-dropdown").click();
             }
         });
-    })
-    $('.repositories-link').on('click', function (e) {
-        $('.branches-container .github-loader').removeClass('hide-loader')
-        clickedRepo = $(this).attr('name');
-        const allCheckedProjects = $('#github-repos .repositories-link');
+    });
+    $(".repositories-link").on("click", function(e) {
+        $(".branches-container .github-loader").removeClass("hide-loader");
+        clickedRepo = $(this).attr("name");
+        const allCheckedProjects = $("#github-repos .repositories-link");
         let getSelectedProjectLinkUrl = null;
-        if (clickedRepo === 'All') {
+        if (clickedRepo === "All") {
             for (let index = 0; index < allCheckedProjects.length; index++) {
-                if ($(allCheckedProjects[index]).attr('name') !== 'All') {
-                    $(allCheckedProjects[index]).prop('checked', false)
+                if ($(allCheckedProjects[index]).attr("name") !== "All") {
+                    $(allCheckedProjects[index]).prop("checked", false);
                 }
             }
-            getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`
+            getSelectedProjectLinkUrl = `headlines?jwt=${jiraAccessToken}`;
         }
-        if (e.target.checked && clickedRepo !== 'All') {
+        if (e.target.checked && clickedRepo !== "All") {
             for (let index = 0; index < allCheckedProjects.length; index++) {
-                if ($(allCheckedProjects[index]).attr('name') === 'All') {
-                    $(allCheckedProjects[index]).prop('checked', false)
+                if ($(allCheckedProjects[index]).attr("name") === "All") {
+                    $(allCheckedProjects[index]).prop("checked", false);
                 }
             }
             projectRepos.push(clickedRepo);
             getSelectedProjectLinkUrl = `headlines?projectKey=${projectKeys}&repoNames=${projectRepos}&jwt=${jiraAccessToken}`;
         }
-        if (!e.target.checked && clickedRepo !== 'All') {
+        if (!e.target.checked && clickedRepo !== "All") {
             for (let index = 0; index < allCheckedProjects.length; index++) {
-                if ($(allCheckedProjects[index]).attr('name') === 'All') {
-                    $(allCheckedProjects[index]).prop('checked', false)
+                if ($(allCheckedProjects[index]).attr("name") === "All") {
+                    $(allCheckedProjects[index]).prop("checked", false);
                 }
             }
             const removeIndex = projectRepos.indexOf(clickedRepo);
@@ -112,13 +136,15 @@ AJS.$(window).load(function () {
         }
 
         $.ajax({
-            type: 'GET',
+            type: "GET",
             url: getSelectedProjectLinkUrl,
-            success: function (data) {
-                $('.branches-container').replaceWith(`<div class="branches-container">${$(".branches-container", data).html()}</div>`);
-                $('.branches-container .jira-loader').addClass('hide-loader')
-                $('.git-dropdown').click();
+            success: function(data) {
+                $(".branches-container").replaceWith(
+                    `<div class="branches-container">${$(".branches-container", data).html()}</div>`
+                );
+                $(".branches-container .jira-loader").addClass("hide-loader");
+                $(".git-dropdown").click();
             }
         });
-    })
+    });
 });
