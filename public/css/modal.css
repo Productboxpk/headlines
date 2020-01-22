@@ -11,3 +11,26 @@
 #github-repo-name {
     margin-left: 20px;    
 }
+
+.conformation-box {
+    margin: 20px 0;
+    display: flex;
+}
+
+#confirm-org-logo {
+    width: 50px;
+    float: left;
+    padding: 0 10px 0 0px;
+}
+
+.name-label {
+    text-align: left !important;
+}
+
+form.aui .icon-required {
+    position: none;
+}
+
+.field-group {
+    display: flex;
+}
