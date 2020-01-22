@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import * as jwt from "atlassian-jwt";
 import { Installations, Subscriptions } from "../db";
 import { token } from "../lib/jira";
-import { authorizeApp, getCurrentUserOrganizations, get } from "../lib/api/github";
+import { authorizeApp, get } from "../lib/api/github";
 import { getAllProjects, getAllProjectIssues } from "../lib/api/jira";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
 
@@ -28,8 +28,7 @@ export default function routes(app, addon) {
                 gdpr: true
             },
             name: "Headlines for Jira",
-            description:
-                "This plugin shows the recent updated tickets and branches of all projects a user is working on",
+            description: "This plugin shows the recent updated tickets and branches of all projects a user is working on",
             key: "headlines-jira",
             baseUrl: `${isHttps ? "https" : "http"}://${req.get("host")}`,
             lifecycle: {
@@ -80,9 +79,8 @@ export default function routes(app, addon) {
         let gitHubData = [];
         const allRepoNames = [];
 
-        const githubDataFromDB = await Subscriptions.findOne({
-            where: { github_installation_id: clientData.github_installation_id }
-        });
+        let githubDataFromDB;
+        if(clientData && clientData.github_installation_id) githubDataFromDB = await Subscriptions.findOne({ where: { github_installation_id: clientData.github_installation_id } });
 
         if (!_.isEmpty(githubDataFromDB && githubDataFromDB.github_access_token)) {
             githubAccessToken = githubDataFromDB && githubDataFromDB.github_access_token; 
@@ -90,24 +88,25 @@ export default function routes(app, addon) {
             const commitsDataPromises = []
             let branchesData = [];
             let commitsData = [];
-            const { data: orgs } = await getCurrentUserOrganizations(githubAccessToken);
-            if (orgs.length) {
-                const orgsReposDataPromises = _.map(orgs, (org) => { return get(githubAccessToken, org.repos_url) });
+            
+            const allowedRepos = githubDataFromDB.repositories;
+            
+            if (allowedRepos) {
+                const orgsReposDataPromises = _.map(allowedRepos, (org) => { return get(githubAccessToken, `https://api.github.com/repos/${org.full_name}`) }); // full_name is like /organization/repositories
                 let orgsData = await Promise.all(orgsReposDataPromises);
-                orgsData = _.first(orgsData).data;
                 const branchsLink = [];
                 const commitsLink = [];
                 _.each(orgsData, (orgData) => {
-                    allRepoNames.push(orgData.name);
+                    allRepoNames.push(orgData.data.name);
                     if (_.isEmpty(repoNames)) {
-                        branchsLink.push(orgData.branches_url.slice(0, -9));
-                        commitsLink.push(orgData.commits_url.slice(0, -6));
+                        branchsLink.push(orgData.data.branches_url.slice(0, -9));
+                        commitsLink.push(orgData.data.commits_url.slice(0, -6));
                     }
-                    if (_.includes(repoNames, orgData.name)) {
-                        branchsLink.push(orgData.branches_url.slice(0, -9));
-                        commitsLink.push(orgData.commits_url.slice(0, -6));
+                    if (_.includes(repoNames, orgData.data.name)) {
+                        branchsLink.push(orgData.data.branches_url.slice(0, -9));
+                        commitsLink.push(orgData.data.commits_url.slice(0, -6));
                     }
-                })
+                });
                 const branchDataPromises = _.map(branchsLink, (branchLink) => get(githubAccessToken, branchLink))
                 let branchesDataResponse = await Promise.all(branchDataPromises);
                 _.each(branchesDataResponse, (branchData) => branchesData = [...branchesData, ...branchData.data]);
@@ -156,6 +155,7 @@ export default function routes(app, addon) {
 
         projectKeys = projectKeys && projectKeys.length && projectKeys.split(",");
         if (_.isEmpty(allProjectKeys)) {
+            console.log('is this empty !!!!', clientData.data.baseUrl)
             const data = await getAllProjects(jiraAccessToken, clientData.data.baseUrl);
             allProjectKeys = _.map(data, k => k.key);
         }
@@ -243,11 +243,11 @@ export default function routes(app, addon) {
     });
 
     app.post("/github/events", async (req, res, next) => {
-        // console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        // console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
-        // console.log("*********************************************");
+        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        console.log(req.body, "Webhook url"); // The github throw much data here we will have to process it properly
+        console.log("*********************************************");
         let { repositories, action } = req.body;
-        const { id: installationId, account: installedFor } = req.body.installation;
+        const { id: installationId, account: installedFor, target_type, repository_selection } = req.body.installation;
 
         if (action === "created") {
             const jiraHost = await Installations.findOne({
@@ -263,7 +263,9 @@ export default function routes(app, addon) {
                         organisation: installedFor.login,
                         jira_client_key: jiraHost.client_key,
                         github_account: installedFor,
-                        repositories: repositories
+                        repositories: repositories,
+                        repository_selection,
+                        account_type: target_type
                     },
                     { where: { github_installation_id: installationId } }
                 );
@@ -273,7 +275,9 @@ export default function routes(app, addon) {
                     jira_client_key: jiraHost.client_key,
                     github_installation_id: installationId,
                     github_account: installedFor,
-                    repositories: repositories
+                    repositories: repositories,
+                    repository_selection,
+                    account_type: target_type
                 });
             }
             await Installations.update(
@@ -288,21 +292,56 @@ export default function routes(app, addon) {
             const foundInstallation = await Subscriptions.findOne({
                 where: { github_installation_id: installationId }
             });
-            console.log("+++++++++++++++++++++++++++++++++++++++++")
-            console.log(foundInstallation, "as found installation");
-            console.log("-----------------------------------------")
+            let oldRepos = foundInstallation.repositories;
+            const removeIds = _.map(repositories_removed, (removeRepo) => {
+                return removeRepo.id;
+            });
+            const repoIndex = _.findIndex(oldRepos, (oldRepo) => {
+                let found = false;
+                    
+                return found;
+            })
+            if (repoIndex > -1) {
+                oldRepos = oldRepos.slice(repoIndex);
+                await Subscriptions.update({ 
+                        repositories: oldRepos,
+                        repository_selection,
+                        account_type: target_type
+                    },
+                    { where: { github_installation_id: installationId } }
+                );
+                console.log("+++++++++++++++++++++++++++++++++++++++++");
+                console.log(oldRepos, "inserting this in database");
+                console.log("-----------------------------------------");
+            }
         }
 
         if (action === "added") {
             const { repositories_added } = req.body;
-            console.log(repositories_added, "repo added new repo");
             const foundInstallation = await Subscriptions.findOne({
                 where: { github_installation_id: installationId }
             });
-            console.log("+++++++++++++++++++++++++++++++++++++++++")
-            console.log(foundInstallation, "as found installation in added ");
-            console.log("-----------------------------------------")
+            const oldRepos = foundInstallation.repositories;
+            const alreadExists = _.find(oldRepos, oldRepo => {
+                let found;
+                _.map(repositories_added, newRepo => {
+                    found = oldRepo.id === newRepo.id;
+                    return;
+                });
+                return found;
+            });
+            if (!alreadExists) {
+                const reposUpdated = [...oldRepos, ...repositories_added];
+                await Subscriptions.update({ 
+                        repositories: reposUpdated,
+                        repository_selection,
+                        account_type: target_type
+                    },
+                    { where: { github_installation_id: installationId } }
+                );
+            }
         }
+
         if (action === "deleted") {
             await Subscriptions.destroy({
                 where: { github_installation_id: installationId }
