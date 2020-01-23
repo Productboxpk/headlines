@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import * as jwt from "atlassian-jwt";
 import { Installations, Subscriptions } from "../db";
-import { token } from "../lib/jira";
+import { token, connect } from "../lib/jira";
 import { authorizeApp, get } from "../lib/api/github";
 import { getAllProjects, getAllProjectIssues } from "../lib/api/jira";
 import { findAndUpdateElseInsert } from "../lib/models/installation";
@@ -20,51 +20,17 @@ export default function routes(app, addon) {
         res.redirect("/atlassian-connect.json");
     });
 
-    app.get("/atlassian-connect.json", (req, res, next) => {
-        const isHttps = req.secure || req.header("x-forwarded-proto") === "https";
-
-        return res.status(200).json({
-            apiMigrations: {
-                gdpr: true
-            },
-            name: "Headlines for Jira",
-            description: "This plugin shows the recent updated tickets and branches of all projects a user is working on",
-            key: "headlines-jira",
-            baseUrl: `${isHttps ? "https" : "http"}://${req.get("host")}`,
-            lifecycle: {
-                installed: "/jira/events/install",
-                uninstalled: "/jira/events/uninstall",
-                enabled: "/jira/events/enabled",
-                disabled: "/jira/events/disabled"
-            },
-            vendor: {
-                name: "Productbox",
-                url: "https://www.productbox.dev"
-            },
-            authentication: {
-                type: "jwt"
-            },
-            scopes: ["READ", "ACT_AS_USER"],
-            apiVersion: 1,
-            modules: {
-                generalPages: [
-                    {
-                        key: "headlines",
-                        location: "system.top.navigation.bar",
-                        name: {
-                            value: "Headlines"
-                        },
-                        url: "/headlines",
-                        conditions: [
-                            {
-                                condition: "user_is_logged_in"
-                            }
-                        ]
-                    }
-                ]
-            }
-        });
+    app.post("/jira/events/enable", async (req, res, next) => {
+       const updated = await Installations.update(
+           { enabled: true },
+           { where: { client_key: req.body.clientKey } }
+       );
+       console.log(updated[0])
+       if(updated[0]) return res.sendStatus(200);
+       else return res.sendStatus(500);
     });
+
+    app.use("/atlassian-connect.json", connect);
 
     app.get("/headlines", async (req, res, next) => {
         const requestJwt = req.query && req.query.jwt && jwt.decode(req.query.jwt, "", true) || null;
@@ -248,14 +214,15 @@ export default function routes(app, addon) {
         let { repositories, action } = req.body;
         const { id: installationId, account: installedFor, target_type, repository_selection } = req.body.installation;
 
+        const foundSubscriptionWithId = await Subscriptions.findOne({
+            where: { github_installation_id: installationId }
+        });
+
         if (action === "created") {
             const jiraHost = await Installations.findOne({
                 where: { organisation: installedFor.login }
             });
-            
-            const foundSubscriptionWithId = await Subscriptions.findOne({
-                where: { github_installation_id: installationId }
-            });
+
             if (foundSubscriptionWithId) {
                 await Subscriptions.update(
                     {
@@ -287,10 +254,7 @@ export default function routes(app, addon) {
 
         if (action === "removed") {
             const { repositories_removed } = req.body;
-            const foundInstallation = await Subscriptions.findOne({
-                where: { github_installation_id: installationId }
-            });
-            let oldRepos = foundInstallation.repositories;
+            let oldRepos = foundSubscriptionWithId.repositories;
             const oldRepoIds = _.map(oldRepos, "id");
 
             _.map(repositories_removed, r => {
@@ -310,10 +274,7 @@ export default function routes(app, addon) {
 
         if (action === "added") {
             const { repositories_added } = req.body;
-            const foundInstallation = await Subscriptions.findOne({
-                where: { github_installation_id: installationId }
-            });
-            const oldRepos = foundInstallation.repositories;
+            const oldRepos = foundSubscriptionWithId.repositories;
             const alreadExists = _.find(oldRepos, oldRepo => {
                 let found;
                 _.map(repositories_added, newRepo => {
