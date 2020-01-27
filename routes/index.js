@@ -89,14 +89,14 @@ export default function routes(app, addon) {
                         singleCommit.branchName = commitData.config.headers.branchName
                     })
                 })
-                const keyedOrgsData = _.keyBy(orgsData, 'html_url')
+                const keyedOrgsData = _.keyBy(orgsData, (e) => e.data.html_url);
                 _.each(commitsData, commits => {
                     gitHubData.push({
                         repo: {
-                            name: keyedOrgsData[_.first(commits.html_url.split('/commit/'))] && keyedOrgsData[_.first(commits.html_url.split('/commit/'))].name,
+                            name: keyedOrgsData[_.first(commits.html_url.split('/commit/'))] && keyedOrgsData[_.first(commits.html_url.split('/commit/'))].data.name,
                             owner: {
-                                name: keyedOrgsData[_.first(commits.html_url.split('/commit/'))] && keyedOrgsData[_.first(commits.html_url.split('/commit/'))].owner.login,
-                                avatarUrl: keyedOrgsData[_.first(commits.html_url.split('/commit/'))] && keyedOrgsData[_.first(commits.html_url.split('/commit/'))].owner.avatar_url
+                                name: keyedOrgsData[_.first(commits.html_url.split('/commit/'))] && keyedOrgsData[_.first(commits.html_url.split('/commit/'))].data.owner.login,
+                                avatarUrl: keyedOrgsData[_.first(commits.html_url.split('/commit/'))] && keyedOrgsData[_.first(commits.html_url.split('/commit/'))].data.owner.avatar_url
                             }
                         },
                         branchName: commits.branchName,
