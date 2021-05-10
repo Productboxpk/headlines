@@ -19,7 +19,7 @@
     "express": "^4.16.4",
     "express-hbs": "^2.3.0",
     "express-session": "^1.17.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "morgan": "^1.9.1",
     "node-cron": "^2.0.3",
     "pg": "^7.12.1",
